@@ -6995,7 +6995,7 @@ exports = module.exports = __webpack_require__(/*! ../../node_modules/css-loader
 
 
 // module
-exports.push([module.i, ".row-content {\n    margin:0px auto;\n    padding: 50px 0px 50px 0px;\n    border-bottom: 1px ridge;\n    min-height:400px;\n}\n\n.jumbotron {\n    padding:70px 30px 70px 30px;\n    margin:0px auto;\n    background: #22428b;\n    color:floralwhite;\n}\n\n.navbar-dark {\n    background-color: #101d69;\n    color: white;\n}\n\n.navbar-inNavbar{\n    background-color: #292929;\n}\n\n.navbar-nav {\n    padding-left: 30px;\n}\n\n.btn-outline-secondary{\n    color:white;\n}\n\n.btn-outline-secondary:hover{\n    background-color: #0b123e;\n}\n\n.dropdown-menu{\n    background-color: #101d69;\n    color: white;\n}\n\n.dropdown-item{\n    color:white;\n}\n\n.dropdown-item:focus, .dropdown-item:hover {\n    color: white;\n    text-decoration: none;\n    background-color: #0b123e;\n}\n\n.footer{\n    background-color: #2e7fc6;\n    color: white;\n    margin:0px auto;\n    padding: 20px 0px 20px 0px;\n}\n\na{\n    color: white;\n}\n\n", ""]);
+exports.push([module.i, ".row-content {\n    margin:0px auto;\n    padding: 50px 0px 50px 0px;\n    border-bottom: 1px ridge;\n    min-height:400px;\n}\n\n.jumbotron {\n    padding:70px 30px 70px 30px;\n    margin:0px auto;\n    background: #22428b;\n    color:floralwhite;\n}\n\n.navbar-dark {\n    background-color: #101d69;\n    color: white;\n}\n\n.navbar-inNavbar{\n    background-color: #292929;\n}\n\n.navbar-nav {\n    padding-left: 15px;\n}\n\n.nav-item {\n    padding-bottom: 0px;\n    padding-top: 0px;\n}\n\n.btn-outline-secondary{\n    color:white;\n}\n\n.dropdown-menu{\n    background-color: #101d69;\n    color: white;\n}\n\n.dropdown-item{\n    color:white;\n}\n\n.dropdown-item:focus, .dropdown-item:hover {\n    color: white;\n    text-decoration: none;\n    background-color: #0b123e;\n}\n\n.footer{\n    background-color: #2e7fc6;\n    color: white;\n    margin:0px auto;\n    padding: 20px 0px 20px 0px;\n}\n\na{\n    color: white;\n}\n\n", ""]);
 
 // exports
 
@@ -8967,6 +8967,436 @@ function hoistNonReactStatics(targetComponent, sourceComponent, blacklist) {
 }
 
 module.exports = hoistNonReactStatics;
+
+
+/***/ }),
+
+/***/ "./node_modules/icepick/icepick.js":
+/*!*****************************************!*\
+  !*** ./node_modules/icepick/icepick.js ***!
+  \*****************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/**
+ * This allows you to work with object hierarchies that have been frozen
+ * with Object.freeze().  "get" operations can use the normal JS syntax,
+ * but operations that modify the data will have to return partial copies of
+ * the structure. The portions of the structure that did not change will
+ * === their previous values.
+ *
+ * Inspired by clojure/mori and Immutable.js
+ */
+
+
+
+var i = exports;
+
+// we only care about objects or arrays for now
+function weCareAbout(val) {
+  return null !== val &&
+    (Array.isArray(val) ||
+      // This will skip objects created with `new Foo()`
+      // and objects created with `Object.create(proto)`
+      // The benefit is ignoring DOM elements and event emitters,
+      // which are often circular.
+      isObjectLike(val));
+}
+
+function isObjectLike(val) {
+  return typeof val === "object" &&
+    val.constructor === Object &&
+    Object.getPrototypeOf(val) === Object.prototype;
+}
+
+
+function arrayClone(arr) {
+  var index = 0,
+    length = arr.length,
+    result = Array(length);
+
+  for (; index < length; index += 1) {
+    result[index] = arr[index];
+  }
+  return result;
+}
+
+function objClone(obj) {
+  var index = 0,
+    keys = Object.keys(obj),
+    length = keys.length,
+    key,
+    result = {};
+
+  for (; index < length; index += 1) {
+    key = keys[index];
+    result[key] = obj[key];
+  }
+  return result;
+}
+
+function clone(coll) {
+  if (Array.isArray(coll)) {
+    return arrayClone(coll);
+  } else {
+    return objClone(coll);
+  }
+}
+
+function freezeIfNeeded(coll) {
+  if (
+      weCareAbout(coll) &&
+      (
+        !Object.isFrozen(coll) &&
+        "development" !== "production"
+      )) {
+    return baseFreeze(coll, []);
+  }
+  return coll;
+}
+
+function _freeze(coll) {
+  if (false) {}
+  if (typeof coll === "object") {
+    return Object.freeze(coll);
+  } else {
+    return coll;
+  }
+}
+
+function baseFreeze(coll, prevNodes) {
+  if (prevNodes.some(function (node) { return node === coll; })) {
+    throw new Error("object has a reference cycle");
+  }
+
+  Object.freeze(coll);
+  prevNodes.push(coll);
+  Object.keys(coll).forEach(function (key) {
+    var prop = coll[key];
+    if (weCareAbout(prop)) {
+      baseFreeze(prop, prevNodes);
+    }
+  });
+  prevNodes.pop();
+
+  return coll;
+}
+
+/**
+ * recrursively freeze an object and all its child objects
+ * @param  {Object|Array} coll
+ * @return {Object|Array}
+ */
+exports.freeze = function freeze(coll) {
+  if (false) {}
+  return baseFreeze(coll, []);
+};
+
+/**
+ * recursively un-freeze an object, by cloning frozen collections
+ * @param  {[type]} coll [description]
+ * @return {[type]}      [description]
+ */
+exports.thaw = function thaw(coll) {
+  if (weCareAbout(coll) && Object.isFrozen(coll)) {
+    var newColl = clone(coll);
+    Object.keys(newColl).forEach(function (key) {
+      newColl[key] = thaw(newColl[key]);
+    });
+    return newColl;
+  }
+  return coll;
+};
+
+/**
+ * set a value on an object or array
+ * @param  {Object|Array}  coll
+ * @param  {String|Number} key   Key or index
+ * @param  {Object}        value
+ * @return {Object|Array}        new object hierarchy with modifications
+ */
+exports.assoc = function assoc(coll, key, value) {
+  if (coll[key] === value) {
+    return _freeze(coll);
+  }
+
+  var newObj = clone(coll);
+
+  newObj[key] = freezeIfNeeded(value);
+
+  return _freeze(newObj);
+
+};
+exports.set = exports.assoc;
+
+/**
+ * un-set a value on an object or array
+ * @param  {Object|Array}  coll
+ * @param  {String|Number} key  Key or Index
+ * @return {Object|Array}       New object or array
+ */
+exports.dissoc = function dissoc(coll, key) {
+  var newObj = clone(coll);
+
+  delete newObj[key];
+
+  return _freeze(newObj);
+};
+exports.unset = exports.dissoc;
+
+/**
+ * set a value deep in a hierarchical structure
+ * @param  {Object|Array} coll
+ * @param  {Array}        path    A list of keys to traverse
+ * @param  {Object}       value
+ * @return {Object|Array}       new object hierarchy with modifications
+ */
+exports.assocIn = function assocIn(coll, path, value) {
+  var key0 = path[0];
+  if (path.length === 1) {
+    // simplest case is a 1-element array.  Just a simple assoc.
+    return i.assoc(coll, key0, value);
+  } else {
+    // break the problem down.  Assoc this object with the first key
+    // and the result of assocIn with the rest of the keys
+    return i.assoc(coll, key0, assocIn(coll[key0] || {}, path.slice(1), value));
+  }
+};
+exports.setIn = exports.assocIn;
+
+/**
+ * get an object from a hierachy based on an array of keys
+ * @param  {Object|Array} coll
+ * @param  {Array}        path    list of keys
+ * @return {Object}       value, or undefined
+ */
+function baseGet(coll, path) {
+  return (path || []).reduce(function (curr, key) {
+    if (!curr) { return; }
+    return curr[key];
+  }, coll);
+}
+
+exports.getIn = baseGet;
+
+/**
+ * Update a value in a hierarchy
+ * @param  {Object|Array}   coll
+ * @param  {Array}          path     list of keys
+ * @param  {Function} callback The existing value with be passed to this.
+ *                             Return the new value to set
+ * @return {Object|Array}      new object hierarchy with modifications
+ */
+exports.updateIn = function updateIn(coll, path, callback) {
+  var existingVal = baseGet(coll, path);
+  return i.assocIn(coll, path, callback(existingVal));
+};
+
+
+// generate wrappers for the mutative array methods
+["push", "unshift", "pop", "shift", "reverse", "sort"]
+.forEach(function (methodName) {
+  exports[methodName] = function (arr, val) {
+    var newArr = arrayClone(arr);
+
+    newArr[methodName](freezeIfNeeded(val));
+
+    return _freeze(newArr);
+  };
+
+  exports[methodName].displayName = "icepick." + methodName;
+});
+
+// splice is special because it is variadic
+exports.splice = function splice(arr/*, args*/) {
+  var newArr = arrayClone(arr),
+    args = rest(arguments).map(freezeIfNeeded);
+
+  newArr.splice.apply(newArr, args);
+
+  return _freeze(newArr);
+};
+
+// slice is non-mutative
+exports.slice = function slice(arr, arg1, arg2) {
+  var newArr = arr.slice(arg1, arg2);
+
+  return _freeze(newArr);
+};
+
+["map", "filter"].forEach(function (methodName) {
+  exports[methodName] = function (fn, arr) {
+    var newArr = arr[methodName](fn);
+
+    return _freeze(newArr);
+  };
+
+  exports[methodName].displayName = "icepick." + methodName;
+});
+
+exports.extend =
+exports.assign = function assign(/*...objs*/) {
+  var newObj = rest(arguments).reduce(singleAssign, arguments[0]);
+
+  return _freeze(newObj);
+};
+
+function singleAssign(obj1, obj2) {
+  return Object.keys(obj2).reduce(function (obj, key) {
+    return i.assoc(obj, key, obj2[key]);
+  }, obj1);
+}
+
+exports.merge = merge;
+function merge(target, source, resolver) {
+  if (target == null || source == null) {
+    return target;
+  }
+  return Object.keys(source).reduce(function (obj, key) {
+    var sourceVal = source[key];
+    var targetVal = obj[key];
+
+    var resolvedSourceVal =
+      resolver ? resolver(targetVal, sourceVal, key) : sourceVal;
+
+    if (weCareAbout(sourceVal) && weCareAbout(targetVal)) {
+      // if they are both frozen and reference equal, assume they are deep equal
+      if ((
+            (Object.isFrozen(resolvedSourceVal) &&
+              Object.isFrozen(targetVal)) ||
+            "development" === "production"
+          ) &&
+          resolvedSourceVal === targetVal) {
+        return obj;
+      }
+      if (Array.isArray(sourceVal)) {
+        return i.assoc(obj, key, resolvedSourceVal);
+      }
+      // recursively merge pairs of objects
+      return assocIfDifferent(obj, key,
+        merge(targetVal, resolvedSourceVal, resolver));
+    }
+
+    // primitive values, stuff with prototypes
+    return assocIfDifferent(obj, key, resolvedSourceVal);
+  }, target);
+}
+
+function assocIfDifferent(target, key, value) {
+  if (target[key] === value) {
+    return target;
+  }
+  return i.assoc(target, key, value);
+}
+
+function _slice(array, start) {
+  var begin = start || 0;
+  var len = array.length;
+  len -= begin;
+  len = len < 0 ? 0 : len;
+  var result = new Array(len);
+  for (var i = 0; i < len; i += 1) {
+    result[i] = array[i + begin];
+  }
+  return result;
+}
+
+
+function rest(args) {
+  return _slice(args, 1);
+}
+
+
+var chainProto = {
+  value: function value() {
+    return this.val;
+  },
+  thru: function thru(fn) {
+    this.val = freezeIfNeeded(fn(this.val));
+    return this;
+  }
+};
+
+Object.keys(exports).forEach(function (methodName) {
+  chainProto[methodName] = function (/*...args*/) {
+    var args = _slice(arguments);
+    args.unshift(this.val);
+    this.val = exports[methodName].apply(null, args);
+    return this;
+  };
+});
+
+exports.chain = function chain(val) {
+  var wrapped = Object.create(chainProto);
+  wrapped.val = val;
+  return wrapped;
+};
+
+// for testing
+exports._weCareAbout = weCareAbout;
+exports._slice = _slice;
+
+
+/***/ }),
+
+/***/ "./node_modules/invariant/browser.js":
+/*!*******************************************!*\
+  !*** ./node_modules/invariant/browser.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/**
+ * Copyright (c) 2013-present, Facebook, Inc.
+ *
+ * This source code is licensed under the MIT license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+
+
+/**
+ * Use invariant() to assert state which your program assumes to be true.
+ *
+ * Provide sprintf-style format (only %s is supported) and arguments
+ * to provide information about what broke and what you were
+ * expecting.
+ *
+ * The invariant message will be stripped in production, but the invariant
+ * will remain to ensure logic does not differ in production.
+ */
+
+var invariant = function(condition, format, a, b, c, d, e, f) {
+  if (true) {
+    if (format === undefined) {
+      throw new Error('invariant requires an error message argument');
+    }
+  }
+
+  if (!condition) {
+    var error;
+    if (format === undefined) {
+      error = new Error(
+        'Minified exception occurred; use the non-minified dev environment ' +
+        'for the full error message and additional helpful warnings.'
+      );
+    } else {
+      var args = [a, b, c, d, e, f];
+      var argIndex = 0;
+      error = new Error(
+        format.replace(/%s/g, function() { return args[argIndex++]; })
+      );
+      error.name = 'Invariant Violation';
+    }
+
+    error.framesToPop = 1; // we don't care about invariant's own frame
+    throw error;
+  }
+};
+
+module.exports = invariant;
 
 
 /***/ }),
@@ -19990,6 +20420,1871 @@ if ( typeof noGlobal === "undefined" ) {
 return jQuery;
 } );
 
+
+/***/ }),
+
+/***/ "./node_modules/lodash.get/index.js":
+/*!******************************************!*\
+  !*** ./node_modules/lodash.get/index.js ***!
+  \******************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Used to match property names within property paths. */
+var reIsDeepProp = /\.|\[(?:[^[\]]*|(["'])(?:(?!\1)[^\\]|\\.)*?\1)\]/,
+    reIsPlainProp = /^\w*$/,
+    reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
+    try {
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    splice = arrayProto.splice;
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.get` without support for default values.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @returns {*} Returns the resolved value.
+ */
+function baseGet(object, path) {
+  path = isKey(path, object) ? [path] : castPath(path);
+
+  var index = 0,
+      length = path.length;
+
+  while (object != null && index < length) {
+    object = object[toKey(path[index++])];
+  }
+  return (index && index == length) ? object : undefined;
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Casts `value` to a path array if it's not one.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {Array} Returns the cast property path array.
+ */
+function castPath(value) {
+  return isArray(value) ? value : stringToPath(value);
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Checks if `value` is a property name and not a property path.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @param {Object} [object] The object to query keys on.
+ * @returns {boolean} Returns `true` if `value` is a property name, else `false`.
+ */
+function isKey(value, object) {
+  if (isArray(value)) {
+    return false;
+  }
+  var type = typeof value;
+  if (type == 'number' || type == 'symbol' || type == 'boolean' ||
+      value == null || isSymbol(value)) {
+    return true;
+  }
+  return reIsPlainProp.test(value) || !reIsDeepProp.test(value) ||
+    (object != null && value in Object(object));
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoize(function(string) {
+  string = toString(string);
+
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result);
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Assign cache to `_.memoize`.
+memoize.Cache = MapCache;
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Gets the value at `path` of `object`. If the resolved value is
+ * `undefined`, the `defaultValue` is returned in its place.
+ *
+ * @static
+ * @memberOf _
+ * @since 3.7.0
+ * @category Object
+ * @param {Object} object The object to query.
+ * @param {Array|string} path The path of the property to get.
+ * @param {*} [defaultValue] The value returned for `undefined` resolved values.
+ * @returns {*} Returns the resolved value.
+ * @example
+ *
+ * var object = { 'a': [{ 'b': { 'c': 3 } }] };
+ *
+ * _.get(object, 'a[0].b.c');
+ * // => 3
+ *
+ * _.get(object, ['a', '0', 'b', 'c']);
+ * // => 3
+ *
+ * _.get(object, 'a.b.c', 'default');
+ * // => 'default'
+ */
+function get(object, path, defaultValue) {
+  var result = object == null ? undefined : baseGet(object, path);
+  return result === undefined ? defaultValue : result;
+}
+
+module.exports = get;
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/lodash.topath/index.js":
+/*!*********************************************!*\
+  !*** ./node_modules/lodash.topath/index.js ***!
+  \*********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {/**
+ * lodash (Custom Build) <https://lodash.com/>
+ * Build: `lodash modularize exports="npm" -o ./`
+ * Copyright jQuery Foundation and other contributors <https://jquery.org/>
+ * Released under MIT license <https://lodash.com/license>
+ * Based on Underscore.js 1.8.3 <http://underscorejs.org/LICENSE>
+ * Copyright Jeremy Ashkenas, DocumentCloud and Investigative Reporters & Editors
+ */
+
+/** Used as the `TypeError` message for "Functions" methods. */
+var FUNC_ERROR_TEXT = 'Expected a function';
+
+/** Used to stand-in for `undefined` hash values. */
+var HASH_UNDEFINED = '__lodash_hash_undefined__';
+
+/** Used as references for various `Number` constants. */
+var INFINITY = 1 / 0;
+
+/** `Object#toString` result references. */
+var funcTag = '[object Function]',
+    genTag = '[object GeneratorFunction]',
+    symbolTag = '[object Symbol]';
+
+/** Used to match property names within property paths. */
+var reLeadingDot = /^\./,
+    rePropName = /[^.[\]]+|\[(?:(-?\d+(?:\.\d+)?)|(["'])((?:(?!\2)[^\\]|\\.)*?)\2)\]|(?=(?:\.|\[\])(?:\.|\[\]|$))/g;
+
+/**
+ * Used to match `RegExp`
+ * [syntax characters](http://ecma-international.org/ecma-262/7.0/#sec-patterns).
+ */
+var reRegExpChar = /[\\^$.*+?()[\]{}|]/g;
+
+/** Used to match backslashes in property paths. */
+var reEscapeChar = /\\(\\)?/g;
+
+/** Used to detect host constructors (Safari). */
+var reIsHostCtor = /^\[object .+?Constructor\]$/;
+
+/** Detect free variable `global` from Node.js. */
+var freeGlobal = typeof global == 'object' && global && global.Object === Object && global;
+
+/** Detect free variable `self`. */
+var freeSelf = typeof self == 'object' && self && self.Object === Object && self;
+
+/** Used as a reference to the global object. */
+var root = freeGlobal || freeSelf || Function('return this')();
+
+/**
+ * A specialized version of `_.map` for arrays without support for iteratee
+ * shorthands.
+ *
+ * @private
+ * @param {Array} [array] The array to iterate over.
+ * @param {Function} iteratee The function invoked per iteration.
+ * @returns {Array} Returns the new mapped array.
+ */
+function arrayMap(array, iteratee) {
+  var index = -1,
+      length = array ? array.length : 0,
+      result = Array(length);
+
+  while (++index < length) {
+    result[index] = iteratee(array[index], index, array);
+  }
+  return result;
+}
+
+/**
+ * Gets the value at `key` of `object`.
+ *
+ * @private
+ * @param {Object} [object] The object to query.
+ * @param {string} key The key of the property to get.
+ * @returns {*} Returns the property value.
+ */
+function getValue(object, key) {
+  return object == null ? undefined : object[key];
+}
+
+/**
+ * Checks if `value` is a host object in IE < 9.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a host object, else `false`.
+ */
+function isHostObject(value) {
+  // Many host objects are `Object` objects that can coerce to strings
+  // despite having improperly defined `toString` methods.
+  var result = false;
+  if (value != null && typeof value.toString != 'function') {
+    try {
+      result = !!(value + '');
+    } catch (e) {}
+  }
+  return result;
+}
+
+/** Used for built-in method references. */
+var arrayProto = Array.prototype,
+    funcProto = Function.prototype,
+    objectProto = Object.prototype;
+
+/** Used to detect overreaching core-js shims. */
+var coreJsData = root['__core-js_shared__'];
+
+/** Used to detect methods masquerading as native. */
+var maskSrcKey = (function() {
+  var uid = /[^.]+$/.exec(coreJsData && coreJsData.keys && coreJsData.keys.IE_PROTO || '');
+  return uid ? ('Symbol(src)_1.' + uid) : '';
+}());
+
+/** Used to resolve the decompiled source of functions. */
+var funcToString = funcProto.toString;
+
+/** Used to check objects for own properties. */
+var hasOwnProperty = objectProto.hasOwnProperty;
+
+/**
+ * Used to resolve the
+ * [`toStringTag`](http://ecma-international.org/ecma-262/7.0/#sec-object.prototype.tostring)
+ * of values.
+ */
+var objectToString = objectProto.toString;
+
+/** Used to detect if a method is native. */
+var reIsNative = RegExp('^' +
+  funcToString.call(hasOwnProperty).replace(reRegExpChar, '\\$&')
+  .replace(/hasOwnProperty|(function).*?(?=\\\()| for .+?(?=\\\])/g, '$1.*?') + '$'
+);
+
+/** Built-in value references. */
+var Symbol = root.Symbol,
+    splice = arrayProto.splice;
+
+/* Built-in method references that are verified to be native. */
+var Map = getNative(root, 'Map'),
+    nativeCreate = getNative(Object, 'create');
+
+/** Used to convert symbols to primitives and strings. */
+var symbolProto = Symbol ? Symbol.prototype : undefined,
+    symbolToString = symbolProto ? symbolProto.toString : undefined;
+
+/**
+ * Creates a hash object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function Hash(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the hash.
+ *
+ * @private
+ * @name clear
+ * @memberOf Hash
+ */
+function hashClear() {
+  this.__data__ = nativeCreate ? nativeCreate(null) : {};
+}
+
+/**
+ * Removes `key` and its value from the hash.
+ *
+ * @private
+ * @name delete
+ * @memberOf Hash
+ * @param {Object} hash The hash to modify.
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function hashDelete(key) {
+  return this.has(key) && delete this.__data__[key];
+}
+
+/**
+ * Gets the hash value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf Hash
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function hashGet(key) {
+  var data = this.__data__;
+  if (nativeCreate) {
+    var result = data[key];
+    return result === HASH_UNDEFINED ? undefined : result;
+  }
+  return hasOwnProperty.call(data, key) ? data[key] : undefined;
+}
+
+/**
+ * Checks if a hash value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf Hash
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function hashHas(key) {
+  var data = this.__data__;
+  return nativeCreate ? data[key] !== undefined : hasOwnProperty.call(data, key);
+}
+
+/**
+ * Sets the hash `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf Hash
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the hash instance.
+ */
+function hashSet(key, value) {
+  var data = this.__data__;
+  data[key] = (nativeCreate && value === undefined) ? HASH_UNDEFINED : value;
+  return this;
+}
+
+// Add methods to `Hash`.
+Hash.prototype.clear = hashClear;
+Hash.prototype['delete'] = hashDelete;
+Hash.prototype.get = hashGet;
+Hash.prototype.has = hashHas;
+Hash.prototype.set = hashSet;
+
+/**
+ * Creates an list cache object.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function ListCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the list cache.
+ *
+ * @private
+ * @name clear
+ * @memberOf ListCache
+ */
+function listCacheClear() {
+  this.__data__ = [];
+}
+
+/**
+ * Removes `key` and its value from the list cache.
+ *
+ * @private
+ * @name delete
+ * @memberOf ListCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function listCacheDelete(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    return false;
+  }
+  var lastIndex = data.length - 1;
+  if (index == lastIndex) {
+    data.pop();
+  } else {
+    splice.call(data, index, 1);
+  }
+  return true;
+}
+
+/**
+ * Gets the list cache value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf ListCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function listCacheGet(key) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  return index < 0 ? undefined : data[index][1];
+}
+
+/**
+ * Checks if a list cache value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf ListCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function listCacheHas(key) {
+  return assocIndexOf(this.__data__, key) > -1;
+}
+
+/**
+ * Sets the list cache `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf ListCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the list cache instance.
+ */
+function listCacheSet(key, value) {
+  var data = this.__data__,
+      index = assocIndexOf(data, key);
+
+  if (index < 0) {
+    data.push([key, value]);
+  } else {
+    data[index][1] = value;
+  }
+  return this;
+}
+
+// Add methods to `ListCache`.
+ListCache.prototype.clear = listCacheClear;
+ListCache.prototype['delete'] = listCacheDelete;
+ListCache.prototype.get = listCacheGet;
+ListCache.prototype.has = listCacheHas;
+ListCache.prototype.set = listCacheSet;
+
+/**
+ * Creates a map cache object to store key-value pairs.
+ *
+ * @private
+ * @constructor
+ * @param {Array} [entries] The key-value pairs to cache.
+ */
+function MapCache(entries) {
+  var index = -1,
+      length = entries ? entries.length : 0;
+
+  this.clear();
+  while (++index < length) {
+    var entry = entries[index];
+    this.set(entry[0], entry[1]);
+  }
+}
+
+/**
+ * Removes all key-value entries from the map.
+ *
+ * @private
+ * @name clear
+ * @memberOf MapCache
+ */
+function mapCacheClear() {
+  this.__data__ = {
+    'hash': new Hash,
+    'map': new (Map || ListCache),
+    'string': new Hash
+  };
+}
+
+/**
+ * Removes `key` and its value from the map.
+ *
+ * @private
+ * @name delete
+ * @memberOf MapCache
+ * @param {string} key The key of the value to remove.
+ * @returns {boolean} Returns `true` if the entry was removed, else `false`.
+ */
+function mapCacheDelete(key) {
+  return getMapData(this, key)['delete'](key);
+}
+
+/**
+ * Gets the map value for `key`.
+ *
+ * @private
+ * @name get
+ * @memberOf MapCache
+ * @param {string} key The key of the value to get.
+ * @returns {*} Returns the entry value.
+ */
+function mapCacheGet(key) {
+  return getMapData(this, key).get(key);
+}
+
+/**
+ * Checks if a map value for `key` exists.
+ *
+ * @private
+ * @name has
+ * @memberOf MapCache
+ * @param {string} key The key of the entry to check.
+ * @returns {boolean} Returns `true` if an entry for `key` exists, else `false`.
+ */
+function mapCacheHas(key) {
+  return getMapData(this, key).has(key);
+}
+
+/**
+ * Sets the map `key` to `value`.
+ *
+ * @private
+ * @name set
+ * @memberOf MapCache
+ * @param {string} key The key of the value to set.
+ * @param {*} value The value to set.
+ * @returns {Object} Returns the map cache instance.
+ */
+function mapCacheSet(key, value) {
+  getMapData(this, key).set(key, value);
+  return this;
+}
+
+// Add methods to `MapCache`.
+MapCache.prototype.clear = mapCacheClear;
+MapCache.prototype['delete'] = mapCacheDelete;
+MapCache.prototype.get = mapCacheGet;
+MapCache.prototype.has = mapCacheHas;
+MapCache.prototype.set = mapCacheSet;
+
+/**
+ * Gets the index at which the `key` is found in `array` of key-value pairs.
+ *
+ * @private
+ * @param {Array} array The array to inspect.
+ * @param {*} key The key to search for.
+ * @returns {number} Returns the index of the matched value, else `-1`.
+ */
+function assocIndexOf(array, key) {
+  var length = array.length;
+  while (length--) {
+    if (eq(array[length][0], key)) {
+      return length;
+    }
+  }
+  return -1;
+}
+
+/**
+ * The base implementation of `_.isNative` without bad shim checks.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a native function,
+ *  else `false`.
+ */
+function baseIsNative(value) {
+  if (!isObject(value) || isMasked(value)) {
+    return false;
+  }
+  var pattern = (isFunction(value) || isHostObject(value)) ? reIsNative : reIsHostCtor;
+  return pattern.test(toSource(value));
+}
+
+/**
+ * The base implementation of `_.toString` which doesn't convert nullish
+ * values to empty strings.
+ *
+ * @private
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ */
+function baseToString(value) {
+  // Exit early for strings to avoid a performance hit in some environments.
+  if (typeof value == 'string') {
+    return value;
+  }
+  if (isSymbol(value)) {
+    return symbolToString ? symbolToString.call(value) : '';
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Copies the values of `source` to `array`.
+ *
+ * @private
+ * @param {Array} source The array to copy values from.
+ * @param {Array} [array=[]] The array to copy values to.
+ * @returns {Array} Returns `array`.
+ */
+function copyArray(source, array) {
+  var index = -1,
+      length = source.length;
+
+  array || (array = Array(length));
+  while (++index < length) {
+    array[index] = source[index];
+  }
+  return array;
+}
+
+/**
+ * Gets the data for `map`.
+ *
+ * @private
+ * @param {Object} map The map to query.
+ * @param {string} key The reference key.
+ * @returns {*} Returns the map data.
+ */
+function getMapData(map, key) {
+  var data = map.__data__;
+  return isKeyable(key)
+    ? data[typeof key == 'string' ? 'string' : 'hash']
+    : data.map;
+}
+
+/**
+ * Gets the native function at `key` of `object`.
+ *
+ * @private
+ * @param {Object} object The object to query.
+ * @param {string} key The key of the method to get.
+ * @returns {*} Returns the function if it's native, else `undefined`.
+ */
+function getNative(object, key) {
+  var value = getValue(object, key);
+  return baseIsNative(value) ? value : undefined;
+}
+
+/**
+ * Checks if `value` is suitable for use as unique object key.
+ *
+ * @private
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is suitable, else `false`.
+ */
+function isKeyable(value) {
+  var type = typeof value;
+  return (type == 'string' || type == 'number' || type == 'symbol' || type == 'boolean')
+    ? (value !== '__proto__')
+    : (value === null);
+}
+
+/**
+ * Checks if `func` has its source masked.
+ *
+ * @private
+ * @param {Function} func The function to check.
+ * @returns {boolean} Returns `true` if `func` is masked, else `false`.
+ */
+function isMasked(func) {
+  return !!maskSrcKey && (maskSrcKey in func);
+}
+
+/**
+ * Converts `string` to a property path array.
+ *
+ * @private
+ * @param {string} string The string to convert.
+ * @returns {Array} Returns the property path array.
+ */
+var stringToPath = memoize(function(string) {
+  string = toString(string);
+
+  var result = [];
+  if (reLeadingDot.test(string)) {
+    result.push('');
+  }
+  string.replace(rePropName, function(match, number, quote, string) {
+    result.push(quote ? string.replace(reEscapeChar, '$1') : (number || match));
+  });
+  return result;
+});
+
+/**
+ * Converts `value` to a string key if it's not a string or symbol.
+ *
+ * @private
+ * @param {*} value The value to inspect.
+ * @returns {string|symbol} Returns the key.
+ */
+function toKey(value) {
+  if (typeof value == 'string' || isSymbol(value)) {
+    return value;
+  }
+  var result = (value + '');
+  return (result == '0' && (1 / value) == -INFINITY) ? '-0' : result;
+}
+
+/**
+ * Converts `func` to its source code.
+ *
+ * @private
+ * @param {Function} func The function to process.
+ * @returns {string} Returns the source code.
+ */
+function toSource(func) {
+  if (func != null) {
+    try {
+      return funcToString.call(func);
+    } catch (e) {}
+    try {
+      return (func + '');
+    } catch (e) {}
+  }
+  return '';
+}
+
+/**
+ * Creates a function that memoizes the result of `func`. If `resolver` is
+ * provided, it determines the cache key for storing the result based on the
+ * arguments provided to the memoized function. By default, the first argument
+ * provided to the memoized function is used as the map cache key. The `func`
+ * is invoked with the `this` binding of the memoized function.
+ *
+ * **Note:** The cache is exposed as the `cache` property on the memoized
+ * function. Its creation may be customized by replacing the `_.memoize.Cache`
+ * constructor with one whose instances implement the
+ * [`Map`](http://ecma-international.org/ecma-262/7.0/#sec-properties-of-the-map-prototype-object)
+ * method interface of `delete`, `get`, `has`, and `set`.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Function
+ * @param {Function} func The function to have its output memoized.
+ * @param {Function} [resolver] The function to resolve the cache key.
+ * @returns {Function} Returns the new memoized function.
+ * @example
+ *
+ * var object = { 'a': 1, 'b': 2 };
+ * var other = { 'c': 3, 'd': 4 };
+ *
+ * var values = _.memoize(_.values);
+ * values(object);
+ * // => [1, 2]
+ *
+ * values(other);
+ * // => [3, 4]
+ *
+ * object.a = 2;
+ * values(object);
+ * // => [1, 2]
+ *
+ * // Modify the result cache.
+ * values.cache.set(object, ['a', 'b']);
+ * values(object);
+ * // => ['a', 'b']
+ *
+ * // Replace `_.memoize.Cache`.
+ * _.memoize.Cache = WeakMap;
+ */
+function memoize(func, resolver) {
+  if (typeof func != 'function' || (resolver && typeof resolver != 'function')) {
+    throw new TypeError(FUNC_ERROR_TEXT);
+  }
+  var memoized = function() {
+    var args = arguments,
+        key = resolver ? resolver.apply(this, args) : args[0],
+        cache = memoized.cache;
+
+    if (cache.has(key)) {
+      return cache.get(key);
+    }
+    var result = func.apply(this, args);
+    memoized.cache = cache.set(key, result);
+    return result;
+  };
+  memoized.cache = new (memoize.Cache || MapCache);
+  return memoized;
+}
+
+// Assign cache to `_.memoize`.
+memoize.Cache = MapCache;
+
+/**
+ * Performs a
+ * [`SameValueZero`](http://ecma-international.org/ecma-262/7.0/#sec-samevaluezero)
+ * comparison between two values to determine if they are equivalent.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to compare.
+ * @param {*} other The other value to compare.
+ * @returns {boolean} Returns `true` if the values are equivalent, else `false`.
+ * @example
+ *
+ * var object = { 'a': 1 };
+ * var other = { 'a': 1 };
+ *
+ * _.eq(object, object);
+ * // => true
+ *
+ * _.eq(object, other);
+ * // => false
+ *
+ * _.eq('a', 'a');
+ * // => true
+ *
+ * _.eq('a', Object('a'));
+ * // => false
+ *
+ * _.eq(NaN, NaN);
+ * // => true
+ */
+function eq(value, other) {
+  return value === other || (value !== value && other !== other);
+}
+
+/**
+ * Checks if `value` is classified as an `Array` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an array, else `false`.
+ * @example
+ *
+ * _.isArray([1, 2, 3]);
+ * // => true
+ *
+ * _.isArray(document.body.children);
+ * // => false
+ *
+ * _.isArray('abc');
+ * // => false
+ *
+ * _.isArray(_.noop);
+ * // => false
+ */
+var isArray = Array.isArray;
+
+/**
+ * Checks if `value` is classified as a `Function` object.
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a function, else `false`.
+ * @example
+ *
+ * _.isFunction(_);
+ * // => true
+ *
+ * _.isFunction(/abc/);
+ * // => false
+ */
+function isFunction(value) {
+  // The use of `Object#toString` avoids issues with the `typeof` operator
+  // in Safari 8-9 which returns 'object' for typed array and other constructors.
+  var tag = isObject(value) ? objectToString.call(value) : '';
+  return tag == funcTag || tag == genTag;
+}
+
+/**
+ * Checks if `value` is the
+ * [language type](http://www.ecma-international.org/ecma-262/7.0/#sec-ecmascript-language-types)
+ * of `Object`. (e.g. arrays, functions, objects, regexes, `new Number(0)`, and `new String('')`)
+ *
+ * @static
+ * @memberOf _
+ * @since 0.1.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is an object, else `false`.
+ * @example
+ *
+ * _.isObject({});
+ * // => true
+ *
+ * _.isObject([1, 2, 3]);
+ * // => true
+ *
+ * _.isObject(_.noop);
+ * // => true
+ *
+ * _.isObject(null);
+ * // => false
+ */
+function isObject(value) {
+  var type = typeof value;
+  return !!value && (type == 'object' || type == 'function');
+}
+
+/**
+ * Checks if `value` is object-like. A value is object-like if it's not `null`
+ * and has a `typeof` result of "object".
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is object-like, else `false`.
+ * @example
+ *
+ * _.isObjectLike({});
+ * // => true
+ *
+ * _.isObjectLike([1, 2, 3]);
+ * // => true
+ *
+ * _.isObjectLike(_.noop);
+ * // => false
+ *
+ * _.isObjectLike(null);
+ * // => false
+ */
+function isObjectLike(value) {
+  return !!value && typeof value == 'object';
+}
+
+/**
+ * Checks if `value` is classified as a `Symbol` primitive or object.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to check.
+ * @returns {boolean} Returns `true` if `value` is a symbol, else `false`.
+ * @example
+ *
+ * _.isSymbol(Symbol.iterator);
+ * // => true
+ *
+ * _.isSymbol('abc');
+ * // => false
+ */
+function isSymbol(value) {
+  return typeof value == 'symbol' ||
+    (isObjectLike(value) && objectToString.call(value) == symbolTag);
+}
+
+/**
+ * Converts `value` to a string. An empty string is returned for `null`
+ * and `undefined` values. The sign of `-0` is preserved.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Lang
+ * @param {*} value The value to process.
+ * @returns {string} Returns the string.
+ * @example
+ *
+ * _.toString(null);
+ * // => ''
+ *
+ * _.toString(-0);
+ * // => '-0'
+ *
+ * _.toString([1, 2, 3]);
+ * // => '1,2,3'
+ */
+function toString(value) {
+  return value == null ? '' : baseToString(value);
+}
+
+/**
+ * Converts `value` to a property path array.
+ *
+ * @static
+ * @memberOf _
+ * @since 4.0.0
+ * @category Util
+ * @param {*} value The value to convert.
+ * @returns {Array} Returns the new property path array.
+ * @example
+ *
+ * _.toPath('a.b.c');
+ * // => ['a', 'b', 'c']
+ *
+ * _.toPath('a[0].b.c');
+ * // => ['a', '0', 'b', 'c']
+ */
+function toPath(value) {
+  if (isArray(value)) {
+    return arrayMap(value, toKey);
+  }
+  return isSymbol(value) ? [value] : copyArray(stringToPath(value));
+}
+
+module.exports = toPath;
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
 
 /***/ }),
 
@@ -66812,6 +69107,9013 @@ function polyfill(Component) {
 
 /***/ }),
 
+/***/ "./node_modules/react-redux-form/lib/action-types.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/action-types.js ***!
+  \***********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var actionTypes = {
+  BLUR: 'rrf/blur',
+  CHANGE: 'rrf/change',
+  FOCUS: 'rrf/focus',
+  RESET: 'rrf/reset',
+  VALIDATE: 'rrf/validate',
+  SET_DIRTY: 'rrf/setDirty',
+  SET_ERRORS: 'rrf/setErrors',
+  SET_INITIAL: 'rrf/setInitial',
+  SET_PENDING: 'rrf/setPending',
+  SET_PRISTINE: 'rrf/setPristine',
+  SET_SUBMITTED: 'rrf/setSubmitted',
+  SET_SUBMIT_FAILED: 'rrf/setSubmitFailed',
+  SET_TOUCHED: 'rrf/setTouched',
+  SET_UNTOUCHED: 'rrf/setUntouched',
+  SET_VALIDITY: 'rrf/setValidity',
+  SET_VALIDATING: 'rrf/setValidating',
+  SET_FIELDS_VALIDITY: 'rrf/setFieldsValidity',
+  SET_VIEW_VALUE: 'rrf/setViewValue',
+  RESET_VALIDITY: 'rrf/resetValidity',
+  BATCH: 'rrf/batch',
+  NULL: null,
+  ADD_INTENT: 'rrf/addIntent',
+  CLEAR_INTENTS: 'rrf/clearIntents'
+};
+
+exports.default = actionTypes;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/actions/batch-actions.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/actions/batch-actions.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.dispatchBatchIfNeeded = undefined;
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _partition3 = __webpack_require__(/*! ../utils/partition */ "./node_modules/react-redux-form/lib/utils/partition.js");
+
+var _partition4 = _interopRequireDefault(_partition3);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _track = __webpack_require__(/*! ../utils/track */ "./node_modules/react-redux-form/lib/utils/track.js");
+
+var _nullAction = __webpack_require__(/*! ../constants/null-action */ "./node_modules/react-redux-form/lib/constants/null-action.js");
+
+var _nullAction2 = _interopRequireDefault(_nullAction);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var batch = (0, _track.trackable)(function (model, actions) {
+  var dispatchableActions = actions.filter(function (action) {
+    return !!action;
+  });
+
+  if (!dispatchableActions.length) return _nullAction2.default;
+
+  if (dispatchableActions.length && dispatchableActions.every(_isPlainObject2.default)) {
+    if (dispatchableActions.length === 1) {
+      return dispatchableActions[0];
+    }
+
+    return {
+      type: _actionTypes2.default.BATCH,
+      model: model,
+      actions: dispatchableActions
+    };
+  }
+
+  var _partition = (0, _partition4.default)(dispatchableActions, function (action) {
+    return typeof action !== 'function';
+  }),
+      _partition2 = _slicedToArray(_partition, 2),
+      plainActions = _partition2[0],
+      actionThunks = _partition2[1];
+
+  if (!actionThunks.length) {
+    if (plainActions.length > 1) {
+      return {
+        type: _actionTypes2.default.BATCH,
+        model: model,
+        actions: plainActions
+      };
+    } else if (plainActions.length === 1) {
+      return plainActions[0];
+    }
+  }
+
+  return function (dispatch) {
+    if (plainActions.length > 1) {
+      dispatch({
+        type: _actionTypes2.default.BATCH,
+        model: model,
+        actions: plainActions
+      });
+    } else if (plainActions.length === 1) {
+      dispatch(plainActions[0]);
+    }
+    actionThunks.forEach(dispatch);
+  };
+});
+
+function dispatchBatchIfNeeded(model, actions, dispatch) {
+  if (!actions.length) return void 0;
+
+  var dispatchableActions = actions.filter(function (action) {
+    return !!action;
+  });
+
+  if (!dispatchableActions.length) return void 0;
+
+  return dispatch(batch(model, dispatchableActions));
+}
+
+exports.default = batch;
+exports.dispatchBatchIfNeeded = dispatchBatchIfNeeded;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/actions/field-actions.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/actions/field-actions.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createFieldActions = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _mapValues = __webpack_require__(/*! ../utils/map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _batchActions = __webpack_require__(/*! ./batch-actions */ "./node_modules/react-redux-form/lib/actions/batch-actions.js");
+
+var _batchActions2 = _interopRequireDefault(_batchActions);
+
+var _getValidity = __webpack_require__(/*! ../utils/get-validity */ "./node_modules/react-redux-form/lib/utils/get-validity.js");
+
+var _getValidity2 = _interopRequireDefault(_getValidity);
+
+var _isValidityValid = __webpack_require__(/*! ../utils/is-validity-valid */ "./node_modules/react-redux-form/lib/utils/is-validity-valid.js");
+
+var _isValidityValid2 = _interopRequireDefault(_isValidityValid);
+
+var _isValidityInvalid = __webpack_require__(/*! ../utils/is-validity-invalid */ "./node_modules/react-redux-form/lib/utils/is-validity-invalid.js");
+
+var _isValidityInvalid2 = _interopRequireDefault(_isValidityInvalid);
+
+var _invertValidity = __webpack_require__(/*! ../utils/invert-validity */ "./node_modules/react-redux-form/lib/utils/invert-validity.js");
+
+var _invertValidity2 = _interopRequireDefault(_invertValidity);
+
+var _track = __webpack_require__(/*! ../utils/track */ "./node_modules/react-redux-form/lib/utils/track.js");
+
+var _getForm = __webpack_require__(/*! ../utils/get-form */ "./node_modules/react-redux-form/lib/utils/get-form.js");
+
+var _getForm2 = _interopRequireDefault(_getForm);
+
+var _getFieldFromState = __webpack_require__(/*! ../utils/get-field-from-state */ "./node_modules/react-redux-form/lib/utils/get-field-from-state.js");
+
+var _getFieldFromState2 = _interopRequireDefault(_getFieldFromState);
+
+var _nullAction = __webpack_require__(/*! ../constants/null-action */ "./node_modules/react-redux-form/lib/constants/null-action.js");
+
+var _nullAction2 = _interopRequireDefault(_nullAction);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var defaultStrategies = {
+  get: _get3.default,
+  getForm: _getForm2.default,
+  getFieldFromState: _getFieldFromState2.default
+};
+
+function createFieldActions() {
+  var s = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategies;
+
+  var addIntent = function addIntent(model, intent) {
+    return {
+      type: _actionTypes2.default.ADD_INTENT,
+      model: model,
+      intent: intent
+    };
+  };
+
+  var clearIntents = function clearIntents(model, intents) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return {
+      type: _actionTypes2.default.CLEAR_INTENTS,
+      model: model,
+      intents: intents,
+      options: options
+    };
+  };
+
+  var focus = function focus(model, value) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return _extends({
+      type: _actionTypes2.default.FOCUS,
+      model: model,
+      value: value
+    }, options);
+  };
+
+  var silentFocus = function silentFocus(model, value) {
+    return focus(model, value, {
+      silent: true
+    });
+  };
+
+  var blur = function blur(model) {
+    return {
+      type: _actionTypes2.default.BLUR,
+      model: model
+    };
+  };
+
+  var setPristine = function setPristine(model) {
+    return {
+      type: _actionTypes2.default.SET_PRISTINE,
+      model: model
+    };
+  };
+
+  var setDirty = function setDirty(model) {
+    return {
+      type: _actionTypes2.default.SET_DIRTY,
+      model: model
+    };
+  };
+
+  var setInitial = function setInitial(model) {
+    return {
+      type: _actionTypes2.default.SET_INITIAL,
+      model: model
+    };
+  };
+
+  var setPending = function setPending(model) {
+    var pending = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    var options = arguments[2];
+    return _extends({
+      type: _actionTypes2.default.SET_PENDING,
+      model: model,
+      pending: pending
+    }, options);
+  };
+
+  var setValidating = function setValidating(model) {
+    var validating = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    return {
+      type: _actionTypes2.default.SET_VALIDATING,
+      model: model,
+      validating: validating
+    };
+  };
+
+  var setValidity = function setValidity(model, validity) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return _extends({
+      type: options.errors ? _actionTypes2.default.SET_ERRORS : _actionTypes2.default.SET_VALIDITY,
+      model: model
+    }, options, _defineProperty({}, options.errors ? 'errors' : 'validity', validity));
+  };
+
+  var resetValidity = function resetValidity(model) {
+    var omitKeys = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+    return {
+      type: _actionTypes2.default.RESET_VALIDITY,
+      model: model,
+      omitKeys: omitKeys
+    };
+  };
+
+  var setFieldsValidity = function setFieldsValidity(model, fieldsValidity) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return {
+      type: _actionTypes2.default.SET_FIELDS_VALIDITY,
+      model: model,
+      fieldsValidity: fieldsValidity,
+      options: options
+    };
+  };
+
+  var setErrors = function setErrors(model, errors) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return setValidity(model, errors, _extends({}, options, {
+      errors: true
+    }));
+  };
+
+  var setFieldsErrors = function setFieldsErrors(model, fieldsErrors, options) {
+    return setFieldsValidity(model, fieldsErrors, _extends({}, options, {
+      errors: true
+    }));
+  };
+
+  var resetErrors = resetValidity;
+
+  var setTouched = function setTouched(model) {
+    return {
+      type: _actionTypes2.default.SET_TOUCHED,
+      model: model
+    };
+  };
+
+  var setUntouched = function setUntouched(model) {
+    return {
+      type: _actionTypes2.default.SET_UNTOUCHED,
+      model: model
+    };
+  };
+
+  var asyncSetValidity = function asyncSetValidity(model, validator) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return function (dispatch, getState) {
+      var value = s.get(getState(), model);
+
+      dispatch(setValidating(model, true));
+
+      var done = function done(validity) {
+        dispatch(setValidity(model, validity, _extends({
+          async: true
+        }, options)));
+      };
+
+      var immediateResult = validator(value, done);
+
+      if (typeof immediateResult !== 'undefined') {
+        done(immediateResult);
+      }
+    };
+  };
+
+  var asyncSetErrors = function asyncSetErrors(model, validator) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return asyncSetValidity(model, validator, _extends({
+      errors: true
+    }, options));
+  };
+
+  var setSubmitted = function setSubmitted(model) {
+    var submitted = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    return {
+      type: _actionTypes2.default.SET_SUBMITTED,
+      model: model,
+      submitted: submitted
+    };
+  };
+
+  var setSubmitFailed = function setSubmitFailed(model) {
+    var submitFailed = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : true;
+    var options = arguments[2];
+    return _extends({
+      type: _actionTypes2.default.SET_SUBMIT_FAILED,
+      model: model,
+      submitFailed: submitFailed
+    }, options);
+  };
+
+  var submit = function submit(model, promise) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    if (typeof promise === 'undefined') {
+      return addIntent(model, { type: 'submit' });
+    }
+
+    return function (dispatch, getState) {
+      if (options.validate) {
+        var form = s.getForm(getState(), model);
+
+        (0, _invariant2.default)(form, 'Unable to submit form with validation. ' + 'Could not find form for "%s" in the store.', model);
+
+        if (!form.$form.valid) {
+          return dispatch(_nullAction2.default);
+        }
+
+        dispatch(setPending(model, true));
+      } else if (options.validators || options.errors) {
+        var validators = options.validators || options.errors;
+        var isErrors = options.errors;
+        var value = s.get(getState(), model);
+        var validity = (0, _getValidity2.default)(validators, value);
+        var valid = options.errors ? !(0, _isValidityInvalid2.default)(validity) : (0, _isValidityValid2.default)(validity);
+
+        if (!valid) {
+          return dispatch(isErrors ? setErrors(model, validity) : setValidity(model, validity));
+        }
+
+        dispatch((0, _batchActions2.default)(model, [setValidity(model, isErrors ? (0, _invertValidity2.default)(validity) : validity), setPending(model, true)]));
+      } else {
+        dispatch(setPending(model, true));
+      }
+
+      var errorsAction = options.fields ? setFieldsErrors : setErrors;
+
+      promise.then(function (response) {
+        dispatch((0, _batchActions2.default)(model, [setSubmitted(model, true), setValidity(model, response)]));
+      }).catch(function (rejection) {
+        var error = rejection instanceof Error ? rejection.message : rejection;
+
+        dispatch((0, _batchActions2.default)(model, [setSubmitFailed(model), errorsAction(model, error, { async: true })]));
+      });
+
+      return promise;
+    };
+  };
+
+  var submitFields = function submitFields(model, promise) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return submit(model, promise, _extends({}, options, {
+      fields: true
+    }));
+  };
+
+  var validSubmit = function validSubmit(model, promise) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return submit(model, promise, _extends({}, options, {
+      validate: true
+    }));
+  };
+
+  var validate = function validate(model, validators) {
+    return function (dispatch, getState) {
+      var value = s.get(getState(), model);
+      var validity = (0, _getValidity2.default)(validators, value);
+
+      dispatch(setValidity(model, validity));
+    };
+  };
+
+  var validateErrors = function validateErrors(model, errorValidators) {
+    return function (dispatch, getState) {
+      var value = s.get(getState(), model);
+      var errors = (0, _getValidity2.default)(errorValidators, value);
+
+      dispatch(setValidity(model, errors, { errors: true }));
+    };
+  };
+
+  var validateFields = function validateFields(model, fieldValidators) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return function (dispatch, getState) {
+      var modelValue = s.get(getState(), model);
+
+      var fieldsValidity = (0, _mapValues2.default)(fieldValidators, function (validator, field) {
+        var fieldValue = field ? s.get(modelValue, field) : modelValue;
+
+        var fieldValidity = (0, _getValidity2.default)(validator, fieldValue);
+
+        return fieldValidity;
+      });
+
+      var fieldsValiditySetter = options.errors ? setFieldsErrors : setFieldsValidity;
+
+      dispatch(fieldsValiditySetter(model, fieldsValidity));
+    };
+  };
+
+  var validateFieldsErrors = function validateFieldsErrors(model, fieldErrorsValidators) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    return validateFields(model, fieldErrorsValidators, _extends({}, options, {
+      errors: true
+    }));
+  };
+
+  return (0, _mapValues2.default)({
+    blur: blur,
+    focus: focus,
+    silentFocus: silentFocus,
+    submit: submit,
+    submitFields: submitFields,
+    validSubmit: validSubmit,
+    setDirty: setDirty,
+    setErrors: setErrors,
+    setInitial: setInitial,
+    setPending: setPending,
+    setValidating: setValidating,
+    setPristine: setPristine,
+    setSubmitted: setSubmitted,
+    setSubmitFailed: setSubmitFailed,
+    setTouched: setTouched,
+    setUntouched: setUntouched,
+    setValidity: setValidity,
+    setFieldsValidity: setFieldsValidity,
+    setFieldsErrors: setFieldsErrors,
+    resetValidity: resetValidity,
+    resetErrors: resetErrors,
+    validate: validate,
+    validateErrors: validateErrors,
+    validateFields: validateFields,
+    validateFieldsErrors: validateFieldsErrors,
+    asyncSetValidity: asyncSetValidity,
+    asyncSetErrors: asyncSetErrors,
+    addIntent: addIntent,
+    clearIntents: clearIntents
+  }, _track.trackable);
+}
+
+exports.createFieldActions = createFieldActions;
+exports.default = createFieldActions();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/actions/index.js":
+/*!************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/actions/index.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _fieldActions = __webpack_require__(/*! ./field-actions */ "./node_modules/react-redux-form/lib/actions/field-actions.js");
+
+var _fieldActions2 = _interopRequireDefault(_fieldActions);
+
+var _modelActions = __webpack_require__(/*! ./model-actions */ "./node_modules/react-redux-form/lib/actions/model-actions.js");
+
+var _modelActions2 = _interopRequireDefault(_modelActions);
+
+var _batchActions = __webpack_require__(/*! ./batch-actions */ "./node_modules/react-redux-form/lib/actions/batch-actions.js");
+
+var _batchActions2 = _interopRequireDefault(_batchActions);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var actions = _extends({}, _fieldActions2.default, _modelActions2.default, {
+  batch: _batchActions2.default
+});
+
+exports.default = actions;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/actions/model-actions.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/actions/model-actions.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+exports.createModelActions = createModelActions;
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _identity = __webpack_require__(/*! ../utils/identity */ "./node_modules/react-redux-form/lib/utils/identity.js");
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+var _getValue = __webpack_require__(/*! ../utils/get-value */ "./node_modules/react-redux-form/lib/utils/get-value.js");
+
+var _getValue2 = _interopRequireDefault(_getValue);
+
+var _isMulti = __webpack_require__(/*! ../utils/is-multi */ "./node_modules/react-redux-form/lib/utils/is-multi.js");
+
+var _isMulti2 = _interopRequireDefault(_isMulti);
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _mapValues = __webpack_require__(/*! ../utils/map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _track = __webpack_require__(/*! ../utils/track */ "./node_modules/react-redux-form/lib/utils/track.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var defaultStrategies = {
+  get: _get3.default,
+  getValue: _getValue2.default,
+  splice: _icepick2.default.splice,
+  merge: _icepick2.default.merge,
+  remove: _icepick2.default.dissoc,
+  push: _icepick2.default.push,
+  length: function length(value) {
+    return value.length;
+  },
+  object: {},
+  array: []
+};
+
+function optionsFromArgs(args, index) {
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+  if (typeof index === 'undefined') return undefined;
+
+  return _extends({}, options, args[index]);
+}
+
+function createModelActions() {
+  var s = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategies;
+
+  var change = function change(model, value) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    // option defaults
+    var changeOptions = _extends({
+      silent: false,
+      multi: (0, _isMulti2.default)(model),
+      external: true
+    }, options);
+
+    if (typeof value === 'function') {
+      return function (dispatch, getState) {
+        var modelValue = s.get(getState(), model);
+
+        return dispatch(change(model, value(modelValue), options));
+      };
+    }
+
+    return _extends({
+      type: _actionTypes2.default.CHANGE,
+      model: model,
+      value: s.getValue(value)
+    }, changeOptions);
+  };
+
+  function createModifierAction(modifier, defaultValue, optionsIndex, getOptions) {
+    var actionCreator = function actionCreator(model) {
+      for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+        args[_key - 1] = arguments[_key];
+      }
+
+      return function (dispatch, getState) {
+        var modelValue = s.get(getState(), model, defaultValue);
+        var value = modifier.apply(undefined, [modelValue].concat(args));
+
+        var options = getOptions ? getOptions.apply(undefined, [value].concat(args)) : undefined;
+
+        dispatch(change(model, value, optionsFromArgs(args, optionsIndex - 1, options)));
+      };
+    };
+
+    return actionCreator;
+  }
+
+  var xor = createModifierAction(function (value, item) {
+    var iteratee = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : function (_item) {
+      return _item === item;
+    };
+
+    var valueWithoutItem = value.filter(function (_item) {
+      return !iteratee(_item);
+    });
+
+    return s.length(value) === s.length(valueWithoutItem) ? s.push(value, item) : valueWithoutItem;
+  }, s.array, 3);
+
+  var push = createModifierAction(function (value, item) {
+    return s.push(value || s.array, item);
+  }, s.array, 2);
+
+  var toggle = createModifierAction(function (value) {
+    return !value;
+  }, undefined, 1);
+
+  var checkWithValue = function checkWithValue(model, value) {
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+    var currentValue = options.currentValue;
+
+
+    if ((0, _isMulti2.default)(model)) {
+      var valueWithItem = currentValue || s.array;
+      var valueWithoutItem = (valueWithItem || s.array).filter(function (item) {
+        return item !== value;
+      });
+      var multiValue = s.length(valueWithoutItem) === s.length(valueWithItem) ? s.push(valueWithItem, value) : valueWithoutItem;
+
+      return change(model, multiValue);
+    }
+
+    if (typeof value === 'undefined') {
+      return change(model, !currentValue);
+    }
+    return change(model, value);
+  };
+
+  var check = function check(model, value) {
+    return function (dispatch, getState) {
+      var modelValue = s.get(getState(), model);
+
+      var action = checkWithValue(model, value, {
+        currentValue: modelValue
+      });
+
+      dispatch(action);
+    };
+  };
+
+  var filter = createModifierAction(function (value, iteratee) {
+    return value.filter(iteratee);
+  }, s.array, 2);
+
+  var reset = function reset(model) {
+    return {
+      type: _actionTypes2.default.RESET,
+      model: model
+    };
+  };
+
+  var map = createModifierAction(function (value) {
+    var iteratee = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : _identity2.default;
+    return value.map(iteratee);
+  }, s.array, 2);
+
+  var remove = createModifierAction(function (value, index) {
+    return s.splice(value, index, 1);
+  }, s.array, 2, function (_, index) {
+    return { removeKeys: [index] };
+  });
+
+  var move = createModifierAction(function (value, indexFrom, indexTo) {
+    if (indexFrom >= s.length(value) || indexTo >= s.length(value)) {
+      throw new Error('Error moving array item: invalid bounds ' + indexFrom + ', ' + indexTo);
+    }
+
+    var item = s.get(value, indexFrom);
+    var removed = s.splice(value, indexFrom, 1);
+    var inserted = s.splice(removed, indexTo, 0, item);
+
+    return inserted;
+  }, s.array, 3);
+
+  var merge = createModifierAction(s.merge, {}, 3);
+
+  var omit = createModifierAction(function (value) {
+    var props = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : [];
+
+    var propsArray = typeof props === 'string' ? [props] : props;
+
+    var newValue = propsArray.reduce(function (acc, prop) {
+      return s.remove(acc, prop);
+    }, value);
+
+    return newValue;
+  }, {}, 2, function (_, props) {
+    return { removeKeys: props };
+  });
+
+  var load = function load(model, values, options) {
+    return change(model, values, _extends({
+      silent: true,
+      load: true
+    }, options));
+  };
+
+  return (0, _mapValues2.default)({
+    change: change,
+    xor: xor,
+    push: push,
+    toggle: toggle,
+    check: check,
+    checkWithValue: checkWithValue,
+    filter: filter,
+    reset: reset,
+    map: map,
+    remove: remove,
+    move: move,
+    merge: merge,
+    omit: omit,
+    load: load
+  }, _track.trackable);
+}
+
+exports.default = createModelActions();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/control-component-factory.js":
+/*!***********************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/control-component-factory.js ***!
+  \***********************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createControlClass = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _reactRedux = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+
+var _redux = __webpack_require__(/*! redux */ "./node_modules/redux/es/redux.js");
+
+var _identity = __webpack_require__(/*! ../utils/identity */ "./node_modules/react-redux-form/lib/utils/identity.js");
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _shallowEqual = __webpack_require__(/*! ../utils/shallow-equal */ "./node_modules/react-redux-form/lib/utils/shallow-equal.js");
+
+var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _merge = __webpack_require__(/*! ../utils/merge */ "./node_modules/react-redux-form/lib/utils/merge.js");
+
+var _merge2 = _interopRequireDefault(_merge);
+
+var _mapValues = __webpack_require__(/*! ../utils/map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+var _omit = __webpack_require__(/*! ../utils/omit */ "./node_modules/react-redux-form/lib/utils/omit.js");
+
+var _omit2 = _interopRequireDefault(_omit);
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _debounce = __webpack_require__(/*! ../utils/debounce */ "./node_modules/react-redux-form/lib/utils/debounce.js");
+
+var _debounce2 = _interopRequireDefault(_debounce);
+
+var _getValue2 = __webpack_require__(/*! ../utils/get-value */ "./node_modules/react-redux-form/lib/utils/get-value.js");
+
+var _getValue3 = _interopRequireDefault(_getValue2);
+
+var _getValidity = __webpack_require__(/*! ../utils/get-validity */ "./node_modules/react-redux-form/lib/utils/get-validity.js");
+
+var _getValidity2 = _interopRequireDefault(_getValidity);
+
+var _invertValidity = __webpack_require__(/*! ../utils/invert-validity */ "./node_modules/react-redux-form/lib/utils/invert-validity.js");
+
+var _invertValidity2 = _interopRequireDefault(_invertValidity);
+
+var _getModel = __webpack_require__(/*! ../utils/get-model */ "./node_modules/react-redux-form/lib/utils/get-model.js");
+
+var _getModel2 = _interopRequireDefault(_getModel);
+
+var _persistEventWithCallback = __webpack_require__(/*! ../utils/persist-event-with-callback */ "./node_modules/react-redux-form/lib/utils/persist-event-with-callback.js");
+
+var _persistEventWithCallback2 = _interopRequireDefault(_persistEventWithCallback);
+
+var _actions = __webpack_require__(/*! ../actions */ "./node_modules/react-redux-form/lib/actions/index.js");
+
+var _actions2 = _interopRequireDefault(_actions);
+
+var _controlPropsMap = __webpack_require__(/*! ../constants/control-props-map */ "./node_modules/react-redux-form/lib/constants/control-props-map.js");
+
+var _controlPropsMap2 = _interopRequireDefault(_controlPropsMap);
+
+var _validityKeys = __webpack_require__(/*! ../constants/validity-keys */ "./node_modules/react-redux-form/lib/constants/validity-keys.js");
+
+var _validityKeys2 = _interopRequireDefault(_validityKeys);
+
+var _batchActions = __webpack_require__(/*! ../actions/batch-actions */ "./node_modules/react-redux-form/lib/actions/batch-actions.js");
+
+var _resolveModel = __webpack_require__(/*! ../utils/resolve-model */ "./node_modules/react-redux-form/lib/utils/resolve-model.js");
+
+var _resolveModel2 = _interopRequireDefault(_resolveModel);
+
+var _isNative = __webpack_require__(/*! ../utils/is-native */ "./node_modules/react-redux-form/lib/utils/is-native.js");
+
+var _isNative2 = _interopRequireDefault(_isNative);
+
+var _initialFieldState = __webpack_require__(/*! ../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+var _containsEvent = __webpack_require__(/*! ../utils/contains-event */ "./node_modules/react-redux-form/lib/utils/contains-event.js");
+
+var _containsEvent2 = _interopRequireDefault(_containsEvent);
+
+var _controlStripDefaultsComponent = __webpack_require__(/*! ./control-strip-defaults-component */ "./node_modules/react-redux-form/lib/components/control-strip-defaults-component.js");
+
+var _controlStripDefaultsComponent2 = _interopRequireDefault(_controlStripDefaultsComponent);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var disallowedProps = ['changeAction', 'getFieldFromState', 'store'];
+
+function mergeOrSetErrors(model, errors, options) {
+  return _actions2.default.setErrors(model, errors, _extends({
+    merge: (0, _isPlainObject.isObjectLike)(errors)
+  }, options));
+}
+
+var propTypes = {
+  model: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.string]).isRequired,
+  modelValue: _propTypes2.default.any,
+  viewValue: _propTypes2.default.any,
+  defaultValue: _propTypes2.default.any,
+  control: _propTypes2.default.any,
+  onLoad: _propTypes2.default.func,
+  onSubmit: _propTypes2.default.func,
+  fieldValue: _propTypes2.default.object,
+  mapProps: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  changeAction: _propTypes2.default.func,
+  updateOn: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  validateOn: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  validators: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  asyncValidateOn: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  asyncValidators: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  errors: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  controlProps: _propTypes2.default.object,
+  component: _propTypes2.default.any,
+  dispatch: _propTypes2.default.func,
+  parser: _propTypes2.default.func,
+  formatter: _propTypes2.default.func,
+  ignore: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  dynamic: _propTypes2.default.bool,
+  store: _propTypes2.default.shape({
+    subscribe: _propTypes2.default.func,
+    dispatch: _propTypes2.default.func,
+    getState: _propTypes2.default.func
+  }),
+  getRef: _propTypes2.default.func,
+  withField: _propTypes2.default.bool,
+  debounce: _propTypes2.default.number,
+  persist: _propTypes2.default.bool,
+  getValue: _propTypes2.default.func,
+  isToggle: _propTypes2.default.bool,
+  updateOnEnter: _propTypes2.default.bool,
+  render: _propTypes2.default.func,
+
+  // HTML5 attributes
+  formNoValidate: _propTypes2.default.bool
+};
+
+var htmlAttributes = ['formNoValidate'];
+var disallowedPropTypeKeys = Object.keys(propTypes).filter(function (key) {
+  return htmlAttributes.indexOf(key) === -1;
+});
+
+function createControlClass(s) {
+  var emptyControlProps = {};
+  var emptyMapProps = {};
+
+  var Control = function (_Component) {
+    _inherits(Control, _Component);
+
+    function Control(props) {
+      _classCallCheck(this, Control);
+
+      var _this = _possibleConstructorReturn(this, (Control.__proto__ || Object.getPrototypeOf(Control)).call(this, props));
+
+      _this.getChangeAction = _this.getChangeAction.bind(_this);
+      _this.getValidateAction = _this.getValidateAction.bind(_this);
+
+      _this.handleKeyPress = _this.handleKeyPress.bind(_this);
+      _this.createEventHandler = _this.createEventHandler.bind(_this);
+      _this.handleFocus = _this.createEventHandler('focus').bind(_this);
+      _this.handleBlur = _this.createEventHandler('blur').bind(_this);
+      _this.handleUpdate = _this.createEventHandler('change').bind(_this);
+      _this.forceHandleUpdate = _this.createEventHandler('change', true).bind(_this);
+      _this.handleChange = _this.handleChange.bind(_this);
+      _this.handleLoad = _this.handleLoad.bind(_this);
+      _this.getMappedProps = _this.getMappedProps.bind(_this);
+      _this.getRenderProps = _this.getRenderProps.bind(_this);
+      _this.attachNode = _this.attachNode.bind(_this);
+
+      if (props.debounce) {
+        _this.handleUpdate = (0, _debounce2.default)(_this.handleUpdate, props.debounce);
+        var oldHandleBlur = _this.handleBlur;
+        _this.handleBlur = function () {
+          for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+            args[_key] = arguments[_key];
+          }
+
+          _this.handleUpdate.flush();
+          oldHandleBlur.call.apply(oldHandleBlur, [_this].concat(args));
+        };
+      }
+
+      _this.willValidate = false;
+
+      _this.state = {
+        viewValue: _this.format(props.modelValue)
+      };
+      return _this;
+    }
+
+    _createClass(Control, [{
+      key: 'componentDidMount',
+      value: function componentDidMount() {
+        this.attachNode();
+        this.handleLoad();
+      }
+    }, {
+      key: 'componentWillReceiveProps',
+      value: function componentWillReceiveProps(_ref) {
+        var modelValue = _ref.modelValue;
+
+        if (modelValue !== this.props.modelValue) {
+          this.setViewValue(modelValue);
+        }
+      }
+    }, {
+      key: 'shouldComponentUpdate',
+      value: function shouldComponentUpdate(nextProps, nextState) {
+        return !(0, _shallowEqual2.default)(this.props, nextProps, {
+          deepKeys: ['controlProps'],
+          omitKeys: ['mapProps']
+        }) || !(0, _shallowEqual2.default)(this.state.viewValue, nextState.viewValue);
+      }
+    }, {
+      key: 'componentDidUpdate',
+      value: function componentDidUpdate() {
+        this.handleIntents();
+      }
+    }, {
+      key: 'componentWillUnmount',
+      value: function componentWillUnmount() {
+        var _props = this.props,
+            model = _props.model,
+            fieldValue = _props.fieldValue,
+            dispatch = _props.dispatch,
+            _props$validators = _props.validators,
+            validators = _props$validators === undefined ? {} : _props$validators,
+            _props$errors = _props.errors,
+            errors = _props$errors === undefined ? {} : _props$errors,
+            persist = _props.persist;
+
+
+        if (!persist && fieldValue && !fieldValue.valid) {
+          var keys = Object.keys(validators).concat(Object.keys(errors), this.willValidate ? _validityKeys2.default : []);
+
+          dispatch(_actions2.default.resetValidity(model, keys));
+        }
+
+        // flush debounced model changes
+        if (this.handleUpdate.flush) {
+          this.handleUpdate.flush();
+        }
+      }
+    }, {
+      key: 'getRenderProps',
+      value: function getRenderProps() {
+        var props = this.props;
+        var viewValue = this.state.viewValue;
+
+        return {
+          modelValue: props.modelValue,
+          fieldValue: props.fieldValue,
+          onFocus: this.handleFocus,
+          onBlur: this.handleBlur,
+          onChange: this.handleChange,
+          onKeyPress: this.handleKeyPress,
+          viewValue: viewValue
+        };
+      }
+    }, {
+      key: 'getMappedProps',
+      value: function getMappedProps() {
+        var props = this.props;
+        var mapProps = props.mapProps;
+        var viewValue = this.state.viewValue;
+
+        var originalProps = _extends({}, props, props.controlProps, {
+          onFocus: this.handleFocus,
+          onBlur: this.handleBlur,
+          onChange: this.handleChange,
+          onKeyPress: this.handleKeyPress,
+          viewValue: viewValue
+        });
+
+        if ((0, _isPlainObject2.default)(mapProps)) {
+          return (0, _mapValues2.default)(mapProps, function (value, key) {
+            if (typeof value === 'function' && key !== 'component') {
+              return value(originalProps);
+            }
+
+            return value;
+          });
+        } else if (typeof mapProps === 'function') {
+          return mapProps(originalProps);
+        }
+
+        return emptyMapProps;
+      }
+    }, {
+      key: 'getChangeAction',
+      value: function getChangeAction(event) {
+        return this.props.changeAction(this.props.model, this.getValue(event), {
+          currentValue: this.props.modelValue,
+          external: false
+        });
+      }
+    }, {
+      key: 'getValidateAction',
+      value: function getValidateAction(value, eventName) {
+        var forceUpdate = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+        var _props2 = this.props,
+            validators = _props2.validators,
+            errors = _props2.errors,
+            model = _props2.model,
+            modelValue = _props2.modelValue,
+            updateOn = _props2.updateOn,
+            fieldValue = _props2.fieldValue;
+
+
+        if (!validators && !errors && !this.willValidate) return false;
+
+        var nodeErrors = this.getNodeErrors();
+
+        // If it is not a change event, use the model value.
+        var valueToValidate = forceUpdate || (0, _containsEvent2.default)(updateOn, eventName) ? value : modelValue;
+
+        if (validators || errors) {
+          var fieldValidity = (0, _getValidity2.default)(validators, valueToValidate);
+          var fieldErrors = (0, _merge2.default)((0, _getValidity2.default)(errors, valueToValidate), nodeErrors);
+
+          var mergedErrors = validators ? (0, _merge2.default)((0, _invertValidity2.default)(fieldValidity), fieldErrors) : fieldErrors;
+
+          if (!fieldValue || !(0, _shallowEqual2.default)(mergedErrors, fieldValue.errors)) {
+            return mergeOrSetErrors(model, mergedErrors);
+          }
+        } else if (nodeErrors && Object.keys(nodeErrors).length) {
+          return mergeOrSetErrors(model, nodeErrors);
+        }
+
+        return false;
+      }
+    }, {
+      key: 'getAsyncValidateAction',
+      value: function getAsyncValidateAction(value, eventName) {
+        var _this2 = this;
+
+        var _props3 = this.props,
+            asyncValidators = _props3.asyncValidators,
+            fieldValue = _props3.fieldValue,
+            model = _props3.model,
+            modelValue = _props3.modelValue,
+            updateOn = _props3.updateOn,
+            _props3$validateOn = _props3.validateOn,
+            validateOn = _props3$validateOn === undefined ? updateOn : _props3$validateOn,
+            asyncValidateOn = _props3.asyncValidateOn,
+            dispatch = _props3.dispatch,
+            getValue = _props3.getValue;
+
+        // If there are no async validators,
+        // do not run async validation
+
+        if (!asyncValidators) return false;
+
+        // If it is not a change event, use the model value.
+        var valueToValidate = (0, _containsEvent2.default)(updateOn, eventName) ? value : modelValue;
+
+        // If any sync validity is invalid,
+        // do not run async validation
+        // unless sync and async validation occur simultaneously
+        if (validateOn !== asyncValidateOn) {
+          var asyncValidatorKeys = Object.keys(asyncValidators);
+          var syncValid = Object.keys(fieldValue.validity).every(function (key) {
+            // If validity is based on async validator, skip
+            if (!!~asyncValidatorKeys.indexOf(key)) return true;
+
+            return fieldValue.validity[key];
+          });
+
+          if (!syncValid) return false;
+        }
+
+        dispatch(_actions2.default.setValidating(model, true));
+
+        (0, _mapValues2.default)(asyncValidators, function (validator, key) {
+          var outerDone = function outerDone(valid) {
+            // get current fieldValue as another validator may have already been processed.
+            var currentFieldValue = _this2.props.fieldValue;
+            var validity = _icepick2.default.merge(currentFieldValue.validity, _defineProperty({}, key, valid));
+
+            dispatch(_actions2.default.setValidity(model, validity));
+          };
+
+          validator(getValue(valueToValidate, _this2.props), outerDone);
+        });
+
+        return valueToValidate;
+      }
+    }, {
+      key: 'getNodeErrors',
+      value: function getNodeErrors() {
+        var node = this.node,
+            _props4 = this.props,
+            fieldValue = _props4.fieldValue,
+            formNoValidate = _props4.formNoValidate;
+
+
+        if (formNoValidate || !node || node && !node.willValidate) {
+          this.willValidate = false;
+          return null;
+        }
+
+        this.willValidate = true;
+
+        var nodeErrors = {};
+
+        _validityKeys2.default.forEach(function (key) {
+          var errorValidity = node.validity[key];
+
+          // If the key is invalid or they key was
+          // previously invalid and is now valid,
+          // set its validity
+          if (errorValidity || fieldValue && fieldValue.errors[key]) {
+            nodeErrors[key] = errorValidity;
+          }
+        });
+
+        return nodeErrors;
+      }
+    }, {
+      key: 'setViewValue',
+      value: function setViewValue(viewValue) {
+        if (!this.props.isToggle) {
+          if (this.props.formatter) {
+            var parsedValue = this.parse(viewValue);
+            this.setState({ viewValue: this.format(parsedValue) });
+          } else {
+            this.setState({ viewValue: this.parse(viewValue) });
+          }
+        }
+      }
+    }, {
+      key: 'getValue',
+      value: function getValue(event) {
+        return this.props.getValue(event, this.props);
+      }
+    }, {
+      key: 'handleIntents',
+      value: function handleIntents() {
+        var _this3 = this;
+
+        var _props5 = this.props,
+            model = _props5.model,
+            modelValue = _props5.modelValue,
+            fieldValue = _props5.fieldValue,
+            intents = _props5.fieldValue.intents,
+            controlProps = _props5.controlProps,
+            dispatch = _props5.dispatch,
+            updateOn = _props5.updateOn,
+            _props5$validateOn = _props5.validateOn,
+            validateOn = _props5$validateOn === undefined ? updateOn : _props5$validateOn;
+
+
+        if (!Array.isArray(intents) || !intents.length) return;
+
+        intents.forEach(function (intent) {
+          switch (intent.type) {
+            case _actionTypes2.default.FOCUS:
+              {
+                if (_isNative2.default) return;
+
+                var focused = fieldValue.focus;
+
+                if (focused && _this3.node.focus && (!_this3.props.isToggle || typeof intent.value === 'undefined' || intent.value === controlProps.value)) {
+                  _this3.node.focus();
+
+                  dispatch(_actions2.default.clearIntents(model, intent));
+                }
+
+                return;
+              }
+            case 'validate':
+              if ((0, _containsEvent2.default)(validateOn, 'change')) {
+                _this3.validate({ clearIntents: intent });
+              }
+              return;
+            case 'reset':
+              _this3.setViewValue(modelValue);
+              if (_this3.handleUpdate.cancel) {
+                _this3.handleUpdate.cancel();
+              }
+              dispatch(_actions2.default.clearIntents(model, intent));
+              if ((0, _containsEvent2.default)(validateOn, 'change')) {
+                _this3.validate({});
+              }
+              return;
+
+            case 'load':
+              if (!(0, _shallowEqual2.default)(modelValue, fieldValue.value)) {
+                dispatch(_actions2.default.load(model, fieldValue.value, { clearIntents: intent }));
+              }
+              return;
+
+            default:
+              return;
+          }
+        });
+      }
+    }, {
+      key: 'parse',
+      value: function parse(value) {
+        return this.props.parser ? this.props.parser(value) : value;
+      }
+    }, {
+      key: 'format',
+      value: function format(value) {
+        return this.props.formatter ? this.props.formatter(value) : value;
+      }
+    }, {
+      key: 'handleChange',
+      value: function handleChange(event) {
+        if (event && event.persist) event.persist();
+
+        this.setViewValue(this.getValue(event));
+        this.handleUpdate(event);
+      }
+    }, {
+      key: 'handleKeyPress',
+      value: function handleKeyPress(event) {
+        var _props6 = this.props,
+            onKeyPress = _props6.controlProps.onKeyPress,
+            updateOnEnter = _props6.updateOnEnter;
+
+
+        if (onKeyPress) onKeyPress(event);
+
+        if (updateOnEnter && event.key === 'Enter') {
+          this.forceHandleUpdate(event);
+        }
+      }
+    }, {
+      key: 'handleLoad',
+      value: function handleLoad() {
+        var _props7 = this.props,
+            model = _props7.model,
+            modelValue = _props7.modelValue,
+            fieldValue = _props7.fieldValue,
+            controlProps = _props7.controlProps,
+            onLoad = _props7.onLoad,
+            dispatch = _props7.dispatch,
+            changeAction = _props7.changeAction,
+            parser = _props7.parser;
+
+        var defaultValue = undefined;
+
+        if (controlProps.hasOwnProperty('defaultValue')) {
+          defaultValue = controlProps.defaultValue;
+        } else if (controlProps.hasOwnProperty('defaultChecked')) {
+          defaultValue = controlProps.defaultChecked;
+        } else if (this.props.hasOwnProperty('defaultValue')) {
+          defaultValue = this.props.defaultValue;
+        }
+
+        var loadActions = [this.getValidateAction(defaultValue)];
+
+        if (typeof defaultValue !== 'undefined') {
+          loadActions.push(changeAction(model, defaultValue));
+        } else {
+          if (parser) {
+            var parsedValue = parser(modelValue);
+
+            if (parsedValue !== modelValue) {
+              loadActions.push(changeAction(model, parsedValue));
+            }
+          }
+        }
+
+        (0, _batchActions.dispatchBatchIfNeeded)(model, loadActions, dispatch);
+
+        if (onLoad) onLoad(modelValue, fieldValue, this.node);
+      }
+    }, {
+      key: 'createEventHandler',
+      value: function createEventHandler(eventName) {
+        var _this4 = this;
+
+        var forceUpdate = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+
+        var eventAction = {
+          focus: _actions2.default.silentFocus,
+          blur: _actions2.default.blur
+        }[eventName];
+
+        var dispatchBatchActions = function dispatchBatchActions(persistedEvent) {
+          var _props8 = _this4.props,
+              dispatch = _props8.dispatch,
+              model = _props8.model,
+              updateOn = _props8.updateOn,
+              _props8$validateOn = _props8.validateOn,
+              validateOn = _props8$validateOn === undefined ? updateOn : _props8$validateOn,
+              asyncValidateOn = _props8.asyncValidateOn;
+
+
+          var eventActions = [eventAction && eventAction(model), (forceUpdate || (0, _containsEvent2.default)(validateOn, eventName)) && _this4.getValidateAction(persistedEvent, eventName, forceUpdate), (forceUpdate || (0, _containsEvent2.default)(asyncValidateOn, eventName)) && _this4.getAsyncValidateAction(persistedEvent, eventName), (forceUpdate || (0, _containsEvent2.default)(updateOn, eventName)) && _this4.getChangeAction(persistedEvent)];
+
+          (0, _batchActions.dispatchBatchIfNeeded)(model, eventActions, dispatch);
+
+          return persistedEvent;
+        };
+
+        return function (event) {
+          var _props9 = _this4.props,
+              controlProps = _props9.controlProps,
+              parser = _props9.parser,
+              ignore = _props9.ignore,
+              withField = _props9.withField,
+              fieldValue = _props9.fieldValue;
+
+
+          var controlEventHandler = {
+            focus: controlProps.onFocus,
+            blur: controlProps.onBlur,
+            change: controlProps.onChange
+          }[eventName];
+
+          if ((0, _containsEvent2.default)(ignore, eventName)) {
+            return controlEventHandler ? controlEventHandler(event) : event;
+          }
+
+          if (_this4.props.isToggle) {
+            return (0, _redux.compose)(dispatchBatchActions, (0, _persistEventWithCallback2.default)(controlEventHandler || _identity2.default))(event);
+          }
+
+          return (0, _redux.compose)(dispatchBatchActions, parser, function (e) {
+            return _this4.getValue(e);
+          }, (0, _persistEventWithCallback2.default)(controlEventHandler || _identity2.default))(event, withField ? fieldValue : undefined);
+        };
+      }
+    }, {
+      key: 'attachNode',
+      value: function attachNode() {
+        var node = s.findDOMNode && s.findDOMNode(this);
+
+        if (node) {
+          this.node = node;
+          this.willValidate = node.willValidate;
+        }
+      }
+    }, {
+      key: 'validate',
+      value: function validate(options) {
+        var _props10 = this.props,
+            model = _props10.model,
+            modelValue = _props10.modelValue,
+            fieldValue = _props10.fieldValue,
+            validators = _props10.validators,
+            errorValidators = _props10.errors,
+            dispatch = _props10.dispatch;
+
+
+        if (!validators && !errorValidators && !this.willValidate || !fieldValue) {
+          return;
+        }
+
+        var fieldValidity = (0, _getValidity2.default)(validators, modelValue);
+        var fieldErrors = (0, _getValidity2.default)(errorValidators, modelValue);
+        var nodeErrors = this.getNodeErrors();
+
+        var errors = validators ? (0, _merge2.default)((0, _invertValidity2.default)(fieldValidity), fieldErrors) : fieldErrors;
+
+        if (this.willValidate) {
+          errors = (0, _merge2.default)(errors, nodeErrors);
+        }
+
+        if (!(0, _shallowEqual2.default)(errors, fieldValue.errors)) {
+          dispatch(mergeOrSetErrors(model, errors, options));
+        } else if (options.clearIntents) {
+          dispatch(_actions2.default.clearIntents(model, options.clearIntents));
+        }
+      }
+    }, {
+      key: 'render',
+      value: function render() {
+        var _props11 = this.props,
+            render = _props11.render,
+            controlProps = _props11.controlProps,
+            component = _props11.component,
+            control = _props11.control,
+            getRef = _props11.getRef,
+            fieldValue = _props11.fieldValue;
+
+
+        if (render) {
+          return render(this.getRenderProps());
+        }
+
+        var mappedProps = (0, _omit2.default)(this.getMappedProps(), disallowedProps);
+
+        if (getRef) {
+          mappedProps.getRef = getRef;
+        }
+
+        if (controlProps.withFieldValue) {
+          mappedProps.fieldValue = fieldValue;
+        }
+
+        // If there is an existing control, clone it
+        if (control) {
+          return (0, _react.cloneElement)(control, _extends({}, mappedProps, {
+            defaultValue: undefined,
+            defaultChecked: undefined
+          }), controlProps.children);
+        }
+        return (0, _react.createElement)(_controlStripDefaultsComponent2.default, _extends({
+          component: component
+        }, controlProps, mappedProps));
+      }
+    }]);
+
+    return Control;
+  }(_react.Component);
+
+  Control.displayName = 'Control';
+
+   true ? Control.propTypes = propTypes : undefined;
+
+  Control.defaultProps = {
+    changeAction: s.actions.change,
+    updateOn: 'change',
+    asyncValidateOn: 'blur',
+    parser: _identity2.default,
+    controlProps: emptyControlProps,
+    ignore: [],
+    dynamic: false,
+    component: 'input',
+    withField: true,
+    persist: false,
+    getValue: _getValue3.default,
+    isToggle: false,
+    updateOnEnter: true
+  };
+
+  function mapStateToProps(state, props) {
+    var model = props.model,
+        controlProps = props.controlProps;
+
+
+    var finalControlProps = _extends({}, controlProps, (0, _omit2.default)(props, disallowedPropTypeKeys));
+
+    var modelString = (0, _getModel2.default)(model, state);
+    var fieldValue = s.getFieldFromState(state, modelString) || _initialFieldState2.default;
+    var modelValue = s.get(state, modelString);
+
+    return {
+      model: modelString,
+      modelValue: modelValue,
+      fieldValue: fieldValue,
+      controlProps: finalControlProps
+    };
+  }
+
+  var ConnectedControl = (0, _resolveModel2.default)((0, _reactRedux.connect)(mapStateToProps, null, null, {
+    areOwnPropsEqual: function areOwnPropsEqual(nextOwnProps, ownProps) {
+      return (0, _shallowEqual2.default)(nextOwnProps, ownProps, {
+        omitKeys: ['mapProps']
+      });
+    },
+    areStatePropsEqual: function areStatePropsEqual(nextStateProps, stateProps) {
+      return (0, _shallowEqual2.default)(nextStateProps, stateProps, {
+        deepKeys: ['controlProps']
+      });
+    }
+  })(Control));
+
+  /* eslint-disable react/prop-types */
+  /* eslint-disable react/no-multi-comp */
+
+  var DefaultConnectedControl = function (_React$Component) {
+    _inherits(DefaultConnectedControl, _React$Component);
+
+    function DefaultConnectedControl() {
+      _classCallCheck(this, DefaultConnectedControl);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControl.__proto__ || Object.getPrototypeOf(DefaultConnectedControl)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControl, [{
+      key: 'shouldComponentUpdate',
+      value: function shouldComponentUpdate(nextProps, nextState, nextContext) {
+        return !(0, _shallowEqual2.default)(this.context, nextContext) || !(0, _shallowEqual2.default)(this.props, nextProps, {
+          deepKeys: ['controlProps'],
+          omitKeys: ['mapProps']
+        });
+      }
+    }, {
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({}, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.default, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControl;
+  }(_react2.default.Component);
+
+  // Copy the context types so that we can properly implement shouldComponentUpdate
+
+
+  DefaultConnectedControl.contextTypes = ConnectedControl.contextTypes;
+
+  DefaultConnectedControl.custom = ConnectedControl;
+
+  var DefaultConnectedControlInput = function (_DefaultConnectedCont) {
+    _inherits(DefaultConnectedControlInput, _DefaultConnectedCont);
+
+    function DefaultConnectedControlInput() {
+      _classCallCheck(this, DefaultConnectedControlInput);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlInput.__proto__ || Object.getPrototypeOf(DefaultConnectedControlInput)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlInput, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'input'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.default, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlInput;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.input = DefaultConnectedControlInput;
+
+  var DefaultConnectedControlText = function (_DefaultConnectedCont2) {
+    _inherits(DefaultConnectedControlText, _DefaultConnectedCont2);
+
+    function DefaultConnectedControlText() {
+      _classCallCheck(this, DefaultConnectedControlText);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlText.__proto__ || Object.getPrototypeOf(DefaultConnectedControlText)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlText, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'input'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.text, {
+            type: this.props.type || 'text'
+          }, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlText;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.text = DefaultConnectedControlText;
+
+  var DefaultConnectedControlPassword = function (_DefaultConnectedCont3) {
+    _inherits(DefaultConnectedControlPassword, _DefaultConnectedCont3);
+
+    function DefaultConnectedControlPassword() {
+      _classCallCheck(this, DefaultConnectedControlPassword);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlPassword.__proto__ || Object.getPrototypeOf(DefaultConnectedControlPassword)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlPassword, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'input'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.text, {
+            type: this.props.type || 'password'
+          }, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlPassword;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.password = DefaultConnectedControlPassword;
+
+  var DefaultConnectedControlTextArea = function (_DefaultConnectedCont4) {
+    _inherits(DefaultConnectedControlTextArea, _DefaultConnectedCont4);
+
+    function DefaultConnectedControlTextArea() {
+      _classCallCheck(this, DefaultConnectedControlTextArea);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlTextArea.__proto__ || Object.getPrototypeOf(DefaultConnectedControlTextArea)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlTextArea, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'textarea',
+          updateOnEnter: false
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.textarea, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlTextArea;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.textarea = DefaultConnectedControlTextArea;
+
+  var DefaultConnectedControlRadio = function (_DefaultConnectedCont5) {
+    _inherits(DefaultConnectedControlRadio, _DefaultConnectedCont5);
+
+    function DefaultConnectedControlRadio() {
+      _classCallCheck(this, DefaultConnectedControlRadio);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlRadio.__proto__ || Object.getPrototypeOf(DefaultConnectedControlRadio)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlRadio, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'input',
+          type: 'radio',
+          isToggle: true
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.radio, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlRadio;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.radio = DefaultConnectedControlRadio;
+
+  var DefaultConnectedControlCheckbox = function (_DefaultConnectedCont6) {
+    _inherits(DefaultConnectedControlCheckbox, _DefaultConnectedCont6);
+
+    function DefaultConnectedControlCheckbox() {
+      _classCallCheck(this, DefaultConnectedControlCheckbox);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlCheckbox.__proto__ || Object.getPrototypeOf(DefaultConnectedControlCheckbox)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlCheckbox, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'input',
+          type: 'checkbox',
+          isToggle: true
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.checkbox, this.props.mapProps),
+          getValue: _getValue2.getCheckboxValue,
+          changeAction: this.props.changeAction || s.actions.checkWithValue
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlCheckbox;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.checkbox = DefaultConnectedControlCheckbox;
+
+  var DefaultConnectedControlFile = function (_DefaultConnectedCont7) {
+    _inherits(DefaultConnectedControlFile, _DefaultConnectedCont7);
+
+    function DefaultConnectedControlFile() {
+      _classCallCheck(this, DefaultConnectedControlFile);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlFile.__proto__ || Object.getPrototypeOf(DefaultConnectedControlFile)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlFile, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'input',
+          type: 'file'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.file, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlFile;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.file = DefaultConnectedControlFile;
+
+  var DefaultConnectedControlSelect = function (_DefaultConnectedCont8) {
+    _inherits(DefaultConnectedControlSelect, _DefaultConnectedCont8);
+
+    function DefaultConnectedControlSelect() {
+      _classCallCheck(this, DefaultConnectedControlSelect);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlSelect.__proto__ || Object.getPrototypeOf(DefaultConnectedControlSelect)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlSelect, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'select'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.select, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlSelect;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.select = DefaultConnectedControlSelect;
+
+  var DefaultConnectedControlButton = function (_DefaultConnectedCont9) {
+    _inherits(DefaultConnectedControlButton, _DefaultConnectedCont9);
+
+    function DefaultConnectedControlButton() {
+      _classCallCheck(this, DefaultConnectedControlButton);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlButton.__proto__ || Object.getPrototypeOf(DefaultConnectedControlButton)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlButton, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'button'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.button, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlButton;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.button = DefaultConnectedControlButton;
+
+  var DefaultConnectedControlReset = function (_DefaultConnectedCont10) {
+    _inherits(DefaultConnectedControlReset, _DefaultConnectedCont10);
+
+    function DefaultConnectedControlReset() {
+      _classCallCheck(this, DefaultConnectedControlReset);
+
+      return _possibleConstructorReturn(this, (DefaultConnectedControlReset.__proto__ || Object.getPrototypeOf(DefaultConnectedControlReset)).apply(this, arguments));
+    }
+
+    _createClass(DefaultConnectedControlReset, [{
+      key: 'render',
+      value: function render() {
+        return _react2.default.createElement(ConnectedControl, _extends({
+          component: 'button',
+          type: 'reset'
+        }, this.props, {
+          mapProps: _extends({}, _controlPropsMap2.default.reset, this.props.mapProps)
+        }));
+      }
+    }]);
+
+    return DefaultConnectedControlReset;
+  }(DefaultConnectedControl);
+
+  DefaultConnectedControl.reset = DefaultConnectedControlReset;
+
+  return DefaultConnectedControl;
+}
+
+exports.createControlClass = createControlClass;
+exports.default = createControlClass;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/control-component.js":
+/*!***************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/control-component.js ***!
+  \***************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createControlClass = undefined;
+
+var _actions = __webpack_require__(/*! ../actions */ "./node_modules/react-redux-form/lib/actions/index.js");
+
+var _actions2 = _interopRequireDefault(_actions);
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _getFieldFromState = __webpack_require__(/*! ../utils/get-field-from-state */ "./node_modules/react-redux-form/lib/utils/get-field-from-state.js");
+
+var _getFieldFromState2 = _interopRequireDefault(_getFieldFromState);
+
+var _controlComponentFactory = __webpack_require__(/*! ./control-component-factory */ "./node_modules/react-redux-form/lib/components/control-component-factory.js");
+
+var _controlComponentFactory2 = _interopRequireDefault(_controlComponentFactory);
+
+var _reactDom = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var defaultStrategy = {
+  get: _get3.default,
+  getFieldFromState: _getFieldFromState2.default,
+  actions: _actions2.default,
+  findDOMNode: _reactDom.findDOMNode
+};
+
+exports.createControlClass = _controlComponentFactory2.default;
+exports.default = (0, _controlComponentFactory2.default)(defaultStrategy);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/control-strip-defaults-component.js":
+/*!******************************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/control-strip-defaults-component.js ***!
+  \******************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+// Prevents the defaultValue/defaultChecked fields from rendering with value/checked
+var ComponentWrapper = function (_Component) {
+  _inherits(ComponentWrapper, _Component);
+
+  function ComponentWrapper() {
+    _classCallCheck(this, ComponentWrapper);
+
+    return _possibleConstructorReturn(this, (ComponentWrapper.__proto__ || Object.getPrototypeOf(ComponentWrapper)).apply(this, arguments));
+  }
+
+  _createClass(ComponentWrapper, [{
+    key: 'render',
+    value: function render() {
+      /* eslint-disable no-unused-vars */
+      var _props = this.props,
+          defaultValue = _props.defaultValue,
+          defaultChecked = _props.defaultChecked,
+          component = _props.component,
+          getRef = _props.getRef,
+          otherProps = _objectWithoutProperties(_props, ['defaultValue', 'defaultChecked', 'component', 'getRef']);
+      /* eslint-enable */
+
+      if (getRef) {
+        otherProps.ref = getRef;
+      }
+      var WrappedComponent = component;
+      return _react2.default.createElement(WrappedComponent, otherProps);
+    }
+  }]);
+
+  return ComponentWrapper;
+}(_react.Component);
+
+ true ? ComponentWrapper.propTypes = {
+  component: _propTypes2.default.any,
+  defaultValue: _propTypes2.default.any,
+  defaultChecked: _propTypes2.default.any,
+  getRef: _propTypes2.default.func
+} : undefined;
+exports.default = ComponentWrapper;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/errors-component.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/errors-component.js ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createErrorsClass = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _reactRedux = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _map = __webpack_require__(/*! ../utils/map */ "./node_modules/react-redux-form/lib/utils/map.js");
+
+var _map2 = _interopRequireDefault(_map);
+
+var _iteratee = __webpack_require__(/*! ../utils/iteratee */ "./node_modules/react-redux-form/lib/utils/iteratee.js");
+
+var _iteratee2 = _interopRequireDefault(_iteratee);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _omit = __webpack_require__(/*! ../utils/omit */ "./node_modules/react-redux-form/lib/utils/omit.js");
+
+var _omit2 = _interopRequireDefault(_omit);
+
+var _getForm = __webpack_require__(/*! ../utils/get-form */ "./node_modules/react-redux-form/lib/utils/get-form.js");
+
+var _getForm2 = _interopRequireDefault(_getForm);
+
+var _getFieldFromState = __webpack_require__(/*! ../utils/get-field-from-state */ "./node_modules/react-redux-form/lib/utils/get-field-from-state.js");
+
+var _getFieldFromState2 = _interopRequireDefault(_getFieldFromState);
+
+var _getModel = __webpack_require__(/*! ../utils/get-model */ "./node_modules/react-redux-form/lib/utils/get-model.js");
+
+var _getModel2 = _interopRequireDefault(_getModel);
+
+var _isValid = __webpack_require__(/*! ../form/is-valid */ "./node_modules/react-redux-form/lib/form/is-valid.js");
+
+var _isValid2 = _interopRequireDefault(_isValid);
+
+var _resolveModel = __webpack_require__(/*! ../utils/resolve-model */ "./node_modules/react-redux-form/lib/utils/resolve-model.js");
+
+var _resolveModel2 = _interopRequireDefault(_resolveModel);
+
+var _initialFieldState = __webpack_require__(/*! ../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+var _shallowEqual = __webpack_require__(/*! ../utils/shallow-equal */ "./node_modules/react-redux-form/lib/utils/shallow-equal.js");
+
+var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var defaultStrategy = {
+  get: _get3.default,
+  getForm: _getForm2.default,
+  getFieldFromState: _getFieldFromState2.default
+};
+
+var propTypes = {
+  // Computed props
+  modelValue: _propTypes2.default.any,
+  formValue: _propTypes2.default.object,
+  fieldValue: _propTypes2.default.object,
+
+  // Provided props
+  model: _propTypes2.default.string.isRequired,
+  messages: _propTypes2.default.objectOf(_propTypes2.default.oneOfType([_propTypes2.default.node, _propTypes2.default.func, _propTypes2.default.bool])),
+  show: _propTypes2.default.any,
+  wrapper: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element, _propTypes2.default.object]),
+  component: _propTypes2.default.oneOfType([_propTypes2.default.string, _propTypes2.default.func, _propTypes2.default.element]),
+  dispatch: _propTypes2.default.func,
+  dynamic: _propTypes2.default.oneOfType([_propTypes2.default.bool, _propTypes2.default.arrayOf(_propTypes2.default.string)]),
+  store: _propTypes2.default.shape({
+    subscribe: _propTypes2.default.func,
+    dispatch: _propTypes2.default.func,
+    getState: _propTypes2.default.func
+  }),
+  storeSubscription: _propTypes2.default.any
+};
+
+function showErrors(field, form) {
+  var show = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : true;
+
+  if (typeof show === 'function') {
+    return show(field, form);
+  }
+
+  if (!Array.isArray(show) && (typeof show === 'undefined' ? 'undefined' : _typeof(show)) !== 'object' && typeof show !== 'string') {
+    return !!show;
+  }
+
+  return (0, _iteratee2.default)(show)(field);
+}
+
+function createErrorsClass() {
+  var s = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategy;
+
+  var Errors = function (_Component) {
+    _inherits(Errors, _Component);
+
+    function Errors() {
+      _classCallCheck(this, Errors);
+
+      return _possibleConstructorReturn(this, (Errors.__proto__ || Object.getPrototypeOf(Errors)).apply(this, arguments));
+    }
+
+    _createClass(Errors, [{
+      key: 'shouldComponentUpdate',
+      value: function shouldComponentUpdate(nextProps) {
+        var fieldValue = nextProps.fieldValue,
+            formValue = nextProps.formValue;
+        var dynamic = this.props.dynamic;
+
+
+        if (dynamic) {
+          return !(0, _shallowEqual2.default)(this.props, nextProps);
+        }
+
+        return fieldValue !== this.props.fieldValue || formValue !== this.props.formValue;
+      }
+    }, {
+      key: 'mapErrorMessages',
+      value: function mapErrorMessages(errors) {
+        var _this2 = this;
+
+        var messages = this.props.messages;
+
+
+        if (typeof errors === 'string') {
+          return this.renderError(errors, 'error');
+        }
+
+        if (!errors) return null;
+
+        return (0, _map2.default)(errors, function (error, key) {
+          var message = messages[key];
+
+          if (error) {
+            if (message || typeof error === 'string') {
+              return _this2.renderError(message || error, key);
+            } else if ((0, _isPlainObject2.default)(error)) {
+              return _this2.mapErrorMessages(error);
+            }
+          }
+
+          return false;
+        }).reduce(function (a, b) {
+          return b ? a.concat(b) : a;
+        }, []);
+      }
+    }, {
+      key: 'renderError',
+      value: function renderError(message, key) {
+        var _props = this.props,
+            component = _props.component,
+            model = _props.model,
+            modelValue = _props.modelValue,
+            fieldValue = _props.fieldValue,
+            errors = _props.fieldValue.errors;
+
+
+        var errorProps = {
+          key: key,
+          model: model,
+          modelValue: modelValue,
+          fieldValue: fieldValue
+        };
+
+        var messageString = typeof message === 'function' ? message(modelValue, errors[key]) : message;
+
+        if (!messageString) return null;
+
+        var allowedProps = typeof component === 'function' ? errorProps : { key: key };
+
+        return _react2.default.createElement(component, allowedProps, messageString);
+      }
+    }, {
+      key: 'render',
+      value: function render() {
+        var _props2 = this.props,
+            fieldValue = _props2.fieldValue,
+            formValue = _props2.formValue,
+            show = _props2.show,
+            wrapper = _props2.wrapper;
+
+
+        var allowedProps = typeof wrapper === 'function' ? this.props : (0, _omit2.default)(this.props, Object.keys(propTypes));
+
+        if (!showErrors(fieldValue, formValue, show)) {
+          return null;
+        }
+
+        var errorMessages = (0, _isValid2.default)(fieldValue) ? null : this.mapErrorMessages(fieldValue.errors);
+
+        if (!errorMessages) return null;
+
+        return _react2.default.createElement(wrapper, allowedProps, errorMessages);
+      }
+    }]);
+
+    return Errors;
+  }(_react.Component);
+
+   true ? Errors.propTypes = propTypes : undefined;
+
+  Errors.defaultProps = {
+    wrapper: 'div',
+    component: 'span',
+    messages: {},
+    show: true,
+    dynamic: true
+  };
+
+  function mapStateToProps(state, _ref) {
+    var model = _ref.model;
+
+    var modelString = (0, _getModel2.default)(model, state);
+
+    var form = s.getForm(state, modelString);
+    (0, _invariant2.default)(form, 'Unable to retrieve errors. ' + 'Could not find form for "%s" in the store.', modelString);
+
+    var formValue = form.$form;
+    var fieldValue = s.getFieldFromState(state, modelString) || _initialFieldState2.default;
+
+    return {
+      model: modelString,
+      modelValue: s.get(state, modelString),
+      formValue: formValue,
+      fieldValue: fieldValue
+    };
+  }
+
+  return (0, _resolveModel2.default)((0, _reactRedux.connect)(mapStateToProps)(Errors));
+}
+
+exports.createErrorsClass = createErrorsClass;
+exports.default = createErrorsClass();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/field-component.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/field-component.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createFieldClass = exports.controlPropsMap = undefined;
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _identity = __webpack_require__(/*! ../utils/identity */ "./node_modules/react-redux-form/lib/utils/identity.js");
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _omit = __webpack_require__(/*! ../utils/omit */ "./node_modules/react-redux-form/lib/utils/omit.js");
+
+var _omit2 = _interopRequireDefault(_omit);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _pick = __webpack_require__(/*! ../utils/pick */ "./node_modules/react-redux-form/lib/utils/pick.js");
+
+var _pick2 = _interopRequireDefault(_pick);
+
+var _reactRedux = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+var _actions = __webpack_require__(/*! ../actions */ "./node_modules/react-redux-form/lib/actions/index.js");
+
+var _actions2 = _interopRequireDefault(_actions);
+
+var _controlComponent = __webpack_require__(/*! ./control-component */ "./node_modules/react-redux-form/lib/components/control-component.js");
+
+var _controlComponent2 = _interopRequireDefault(_controlComponent);
+
+var _controlPropsMap2 = __webpack_require__(/*! ../constants/control-props-map */ "./node_modules/react-redux-form/lib/constants/control-props-map.js");
+
+var _controlPropsMap3 = _interopRequireDefault(_controlPropsMap2);
+
+var _deepCompareChildren = __webpack_require__(/*! ../utils/deep-compare-children */ "./node_modules/react-redux-form/lib/utils/deep-compare-children.js");
+
+var _deepCompareChildren2 = _interopRequireDefault(_deepCompareChildren);
+
+var _shallowCompareWithoutChildren = __webpack_require__(/*! ../utils/shallow-compare-without-children */ "./node_modules/react-redux-form/lib/utils/shallow-compare-without-children.js");
+
+var _shallowCompareWithoutChildren2 = _interopRequireDefault(_shallowCompareWithoutChildren);
+
+var _getModel = __webpack_require__(/*! ../utils/get-model */ "./node_modules/react-redux-form/lib/utils/get-model.js");
+
+var _getModel2 = _interopRequireDefault(_getModel);
+
+var _getFieldFromState = __webpack_require__(/*! ../utils/get-field-from-state */ "./node_modules/react-redux-form/lib/utils/get-field-from-state.js");
+
+var _getFieldFromState2 = _interopRequireDefault(_getFieldFromState);
+
+var _resolveModel = __webpack_require__(/*! ../utils/resolve-model */ "./node_modules/react-redux-form/lib/utils/resolve-model.js");
+
+var _resolveModel2 = _interopRequireDefault(_resolveModel);
+
+var _getValue = __webpack_require__(/*! ../utils/get-value */ "./node_modules/react-redux-form/lib/utils/get-value.js");
+
+var _initialFieldState = __webpack_require__(/*! ../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var fieldPropTypes = {
+  model: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.string]).isRequired,
+  component: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.string]),
+  parser: _propTypes2.default.func,
+  formatter: _propTypes2.default.func,
+  updateOn: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  changeAction: _propTypes2.default.func,
+  validators: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  asyncValidators: _propTypes2.default.object,
+  validateOn: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  asyncValidateOn: _propTypes2.default.oneOfType([_propTypes2.default.arrayOf(_propTypes2.default.string), _propTypes2.default.string]),
+  errors: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  mapProps: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.object]),
+  componentMap: _propTypes2.default.object,
+  dynamic: _propTypes2.default.bool,
+  dispatch: _propTypes2.default.func,
+  getRef: _propTypes2.default.func,
+
+  // Calculated props
+  fieldValue: _propTypes2.default.object,
+  store: _propTypes2.default.shape({
+    subscribe: _propTypes2.default.func,
+    dispatch: _propTypes2.default.func,
+    getState: _propTypes2.default.func
+  }),
+  storeSubscription: _propTypes2.default.any
+};
+
+function getControlType(control, props, options) {
+  var _controlPropsMap = options.controlPropsMap;
+
+
+  var controlDisplayNames = Object.keys(_controlPropsMap).filter(function (controlKey) {
+    var propsMap = _controlPropsMap[controlKey];
+
+    if ((0, _isPlainObject2.default)(propsMap) && propsMap.component) {
+      return control.type === propsMap.component;
+    }
+
+    return false;
+  });
+
+  if (controlDisplayNames.length) return controlDisplayNames[0];
+
+  try {
+    var controlDisplayName = control.constructor.displayName || control.type.displayName || control.type.name || control.type;
+
+    if (controlDisplayName === 'input') {
+      controlDisplayName = _controlPropsMap[control.props.type] ? control.props.type : 'text';
+    }
+
+    return _controlPropsMap[controlDisplayName] ? controlDisplayName : null;
+  } catch (error) {
+    return undefined;
+  }
+}
+
+var defaultStrategy = {
+  Control: _controlComponent2.default,
+  controlPropTypes: fieldPropTypes,
+  getFieldFromState: _getFieldFromState2.default,
+  actions: _actions2.default
+};
+
+function createFieldClass() {
+  var customControlPropsMap = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : {};
+  var s = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : defaultStrategy;
+
+  // Use the fieldPropTypes if no controlProptypes have been defined to
+  // maintain backwards compatibiltiy.
+  var controlPropTypes = s.controlPropTypes || fieldPropTypes;
+
+  function mapStateToProps(state, props) {
+    var model = props.model;
+
+
+    var modelString = (0, _getModel2.default)(model, state);
+    var fieldValue = s.getFieldFromState(state, modelString) || _initialFieldState2.default;
+
+    return {
+      model: modelString,
+      fieldValue: fieldValue
+    };
+  }
+
+  var options = {
+    controlPropsMap: _extends({}, _controlPropsMap3.default, customControlPropsMap)
+  };
+
+  // TODO: refactor
+  var defaultControlPropsMap = {
+    checkbox: {
+      changeAction: s.actions.checkWithValue,
+      getValue: _getValue.getCheckboxValue,
+      isToggle: true
+    },
+    radio: {
+      isToggle: true
+    }
+  };
+
+  var Field = function (_Component) {
+    _inherits(Field, _Component);
+
+    function Field() {
+      _classCallCheck(this, Field);
+
+      return _possibleConstructorReturn(this, (Field.__proto__ || Object.getPrototypeOf(Field)).apply(this, arguments));
+    }
+
+    _createClass(Field, [{
+      key: 'shouldComponentUpdate',
+      value: function shouldComponentUpdate(nextProps, nextState) {
+        var dynamic = this.props.dynamic;
+
+
+        if (dynamic) {
+          return (0, _deepCompareChildren2.default)(this, nextProps, nextState);
+        }
+
+        return (0, _shallowCompareWithoutChildren2.default)(this, nextProps);
+      }
+    }, {
+      key: 'createControlComponent',
+      value: function createControlComponent(control) {
+        var props = this.props;
+
+
+        if (!control || !control.props || control instanceof _controlComponent2.default) {
+          return control;
+        }
+
+        var controlType = getControlType(control, props, options);
+        var _props$mapProps = props.mapProps,
+            mapProps = _props$mapProps === undefined ? options.controlPropsMap[controlType] : _props$mapProps;
+
+
+        var controlProps = (0, _pick2.default)(props, Object.keys(controlPropTypes));
+
+        if (!mapProps) {
+          return _react2.default.cloneElement(control, null, this.mapChildrenToControl(control.props.children));
+        }
+
+        return _react2.default.createElement(s.Control, _extends({}, controlProps, {
+          control: control,
+          controlProps: control.props,
+          component: control.type,
+          mapProps: mapProps
+        }, defaultControlPropsMap[controlType] || {}));
+      }
+    }, {
+      key: 'mapChildrenToControl',
+      value: function mapChildrenToControl(children) {
+        var _this2 = this;
+
+        if (_react2.default.Children.count(children) > 1) {
+          return _react2.default.Children.map(children, function (child) {
+            return _this2.createControlComponent(child);
+          });
+        }
+
+        return this.createControlComponent(children);
+      }
+    }, {
+      key: 'render',
+      value: function render() {
+        var _props = this.props,
+            component = _props.component,
+            children = _props.children,
+            fieldValue = _props.fieldValue;
+
+
+        var allowedProps = (0, _omit2.default)(this.props, Object.keys(controlPropTypes));
+        var renderableChildren = typeof children === 'function' ? children(fieldValue) : children;
+
+        if (!component) {
+          (0, _invariant2.default)(_react2.default.Children.count(renderableChildren) === 1, 'Empty wrapper components for <Field> are only possible' + 'when there is a single child. Please check the children' + ('passed into <Field model="' + this.props.model + '">.'));
+
+          return this.createControlComponent(renderableChildren);
+        }
+
+        return _react2.default.createElement(component, allowedProps, this.mapChildrenToControl(renderableChildren));
+      }
+    }]);
+
+    return Field;
+  }(_react.Component);
+
+  if (true) {
+     true ? Field.propTypes = fieldPropTypes : undefined;
+  }
+
+  Field.defaultProps = {
+    updateOn: 'change',
+    asyncValidateOn: 'blur',
+    parser: _identity2.default,
+    formatter: _identity2.default,
+    changeAction: _actions2.default.change,
+    dynamic: true,
+    component: 'div'
+  };
+
+  return (0, _resolveModel2.default)((0, _reactRedux.connect)(mapStateToProps)(Field));
+}
+
+exports.controlPropsMap = _controlPropsMap3.default;
+exports.createFieldClass = createFieldClass;
+exports.default = createFieldClass(_controlPropsMap3.default);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/fieldset-component.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/fieldset-component.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _reactRedux = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+
+var _getModel = __webpack_require__(/*! ../utils/get-model */ "./node_modules/react-redux-form/lib/utils/get-model.js");
+
+var _getModel2 = _interopRequireDefault(_getModel);
+
+var _omit = __webpack_require__(/*! ../utils/omit */ "./node_modules/react-redux-form/lib/utils/omit.js");
+
+var _omit2 = _interopRequireDefault(_omit);
+
+var _resolveModel = __webpack_require__(/*! ../utils/resolve-model */ "./node_modules/react-redux-form/lib/utils/resolve-model.js");
+
+var _resolveModel2 = _interopRequireDefault(_resolveModel);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var propTypes = {
+  model: _propTypes2.default.string.isRequired,
+  component: _propTypes2.default.any,
+  dispatch: _propTypes2.default.func,
+  store: _propTypes2.default.shape({
+    subscribe: _propTypes2.default.func,
+    dispatch: _propTypes2.default.func,
+    getState: _propTypes2.default.func
+  }),
+  storeSubscription: _propTypes2.default.any
+};
+
+var Fieldset = function (_Component) {
+  _inherits(Fieldset, _Component);
+
+  function Fieldset() {
+    _classCallCheck(this, Fieldset);
+
+    return _possibleConstructorReturn(this, (Fieldset.__proto__ || Object.getPrototypeOf(Fieldset)).apply(this, arguments));
+  }
+
+  _createClass(Fieldset, [{
+    key: 'getChildContext',
+    value: function getChildContext() {
+      return { model: this.props.model };
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var component = this.props.component;
+
+
+      var allowedProps = (0, _omit2.default)(this.props, Object.keys(propTypes));
+
+      return _react2.default.createElement(component, allowedProps);
+    }
+  }]);
+
+  return Fieldset;
+}(_react.Component);
+
+Fieldset.displayName = 'Fieldset';
+
+Fieldset.childContextTypes = {
+  model: _propTypes2.default.any
+};
+
+ true ? Fieldset.propTypes = propTypes : undefined;
+
+Fieldset.defaultProps = {
+  component: 'div'
+};
+
+function mapStateToProps(state, _ref) {
+  var model = _ref.model;
+
+  var modelString = (0, _getModel2.default)(model, state);
+
+  return {
+    model: modelString
+  };
+}
+
+exports.default = (0, _resolveModel2.default)((0, _reactRedux.connect)(mapStateToProps)(Fieldset));
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/form-component.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/form-component.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createFormClass = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _reactRedux = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+
+var _shallowEqual = __webpack_require__(/*! ../utils/shallow-equal */ "./node_modules/react-redux-form/lib/utils/shallow-equal.js");
+
+var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _omit = __webpack_require__(/*! ../utils/omit */ "./node_modules/react-redux-form/lib/utils/omit.js");
+
+var _omit2 = _interopRequireDefault(_omit);
+
+var _actions = __webpack_require__(/*! ../actions */ "./node_modules/react-redux-form/lib/actions/index.js");
+
+var _actions2 = _interopRequireDefault(_actions);
+
+var _getValidity = __webpack_require__(/*! ../utils/get-validity */ "./node_modules/react-redux-form/lib/utils/get-validity.js");
+
+var _getValidity2 = _interopRequireDefault(_getValidity);
+
+var _invertValidators = __webpack_require__(/*! ../utils/invert-validators */ "./node_modules/react-redux-form/lib/utils/invert-validators.js");
+
+var _invertValidators2 = _interopRequireDefault(_invertValidators);
+
+var _isValidityInvalid = __webpack_require__(/*! ../utils/is-validity-invalid */ "./node_modules/react-redux-form/lib/utils/is-validity-invalid.js");
+
+var _isValidityInvalid2 = _interopRequireDefault(_isValidityInvalid);
+
+var _isValid = __webpack_require__(/*! ../form/is-valid */ "./node_modules/react-redux-form/lib/form/is-valid.js");
+
+var _isValid2 = _interopRequireDefault(_isValid);
+
+var _getForm = __webpack_require__(/*! ../utils/get-form */ "./node_modules/react-redux-form/lib/utils/get-form.js");
+
+var _getForm2 = _interopRequireDefault(_getForm);
+
+var _getModel = __webpack_require__(/*! ../utils/get-model */ "./node_modules/react-redux-form/lib/utils/get-model.js");
+
+var _getModel2 = _interopRequireDefault(_getModel);
+
+var _getField = __webpack_require__(/*! ../utils/get-field */ "./node_modules/react-redux-form/lib/utils/get-field.js");
+
+var _getField2 = _interopRequireDefault(_getField);
+
+var _deepCompareChildren = __webpack_require__(/*! ../utils/deep-compare-children */ "./node_modules/react-redux-form/lib/utils/deep-compare-children.js");
+
+var _deepCompareChildren2 = _interopRequireDefault(_deepCompareChildren);
+
+var _containsEvent = __webpack_require__(/*! ../utils/contains-event */ "./node_modules/react-redux-form/lib/utils/contains-event.js");
+
+var _containsEvent2 = _interopRequireDefault(_containsEvent);
+
+var _mergeValidity = __webpack_require__(/*! ../utils/merge-validity */ "./node_modules/react-redux-form/lib/utils/merge-validity.js");
+
+var _mergeValidity2 = _interopRequireDefault(_mergeValidity);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var propTypes = {
+  component: _propTypes2.default.any,
+  validators: _propTypes2.default.oneOfType([_propTypes2.default.object, _propTypes2.default.func]),
+  errors: _propTypes2.default.object,
+  validateOn: _propTypes2.default.oneOf(['change', 'submit']),
+  model: _propTypes2.default.string.isRequired,
+  modelValue: _propTypes2.default.any,
+  formValue: _propTypes2.default.object,
+  onSubmit: _propTypes2.default.func,
+  onSubmitFailed: _propTypes2.default.func,
+  dispatch: _propTypes2.default.func,
+  children: _propTypes2.default.oneOfType([_propTypes2.default.func, _propTypes2.default.node]),
+  store: _propTypes2.default.shape({
+    subscribe: _propTypes2.default.func,
+    dispatch: _propTypes2.default.func,
+    getState: _propTypes2.default.func
+  }),
+  storeSubscription: _propTypes2.default.any,
+  onUpdate: _propTypes2.default.func,
+  onChange: _propTypes2.default.func,
+  getRef: _propTypes2.default.func,
+  getDispatch: _propTypes2.default.func,
+  onBeforeSubmit: _propTypes2.default.func,
+  hideNativeErrors: _propTypes2.default.bool,
+
+  // standard HTML attributes
+  action: _propTypes2.default.string,
+  noValidate: _propTypes2.default.bool
+};
+
+var htmlAttributes = ['action', 'noValidate'];
+var disallowedPropTypeKeys = Object.keys(propTypes).filter(function (key) {
+  return htmlAttributes.indexOf(key) === -1;
+});
+
+var defaultStrategy = {
+  get: _get3.default,
+  getForm: _getForm2.default,
+  actions: _actions2.default
+};
+
+function createFormClass() {
+  var s = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategy;
+
+  var Form = function (_Component) {
+    _inherits(Form, _Component);
+
+    function Form(props) {
+      _classCallCheck(this, Form);
+
+      var _this = _possibleConstructorReturn(this, (Form.__proto__ || Object.getPrototypeOf(Form)).call(this, props));
+
+      _this.handleSubmit = _this.handleSubmit.bind(_this);
+      _this.handleReset = _this.handleReset.bind(_this);
+      _this.handleValidSubmit = _this.handleValidSubmit.bind(_this);
+      _this.handleInvalidSubmit = _this.handleInvalidSubmit.bind(_this);
+      _this.attachNode = _this.attachNode.bind(_this);
+
+      _this.state = {
+        lastSubmitEvent: null
+      };
+      return _this;
+    }
+
+    _createClass(Form, [{
+      key: 'getChildContext',
+      value: function getChildContext() {
+        return {
+          model: this.props.model,
+          localStore: this.props.store
+        };
+      }
+    }, {
+      key: 'componentDidMount',
+      value: function componentDidMount() {
+        if ((0, _containsEvent2.default)(this.props.validateOn, 'change')) {
+          this.validate(this.props, true);
+        }
+
+        if (this.props.getDispatch) {
+          this.props.getDispatch(this.props.dispatch);
+        }
+      }
+    }, {
+      key: 'componentWillReceiveProps',
+      value: function componentWillReceiveProps(nextProps) {
+        if ((0, _containsEvent2.default)(nextProps.validateOn, 'change')) {
+          this.validate(nextProps);
+        }
+      }
+    }, {
+      key: 'shouldComponentUpdate',
+      value: function shouldComponentUpdate(nextProps, nextState) {
+        return (0, _deepCompareChildren2.default)(this, nextProps, nextState);
+      }
+    }, {
+      key: 'componentDidUpdate',
+      value: function componentDidUpdate(prevProps) {
+        this.handleIntents();
+
+        if (!(0, _shallowEqual2.default)(prevProps.formValue, this.props.formValue)) {
+          this.handleUpdate();
+        }
+
+        if (!(0, _shallowEqual2.default)(prevProps.modelValue, this.props.modelValue)) {
+          this.handleChange();
+        }
+      }
+    }, {
+      key: 'handleUpdate',
+      value: function handleUpdate() {
+        if (this.props.onUpdate) {
+          this.props.onUpdate(this.props.formValue);
+        }
+      }
+    }, {
+      key: 'handleChange',
+      value: function handleChange() {
+        if (this.props.onChange) {
+          this.props.onChange(this.props.modelValue);
+        }
+      }
+    }, {
+      key: 'attachNode',
+      value: function attachNode(node) {
+        if (!node) return;
+
+        this._node = node;
+
+        this._node.submit = this.handleSubmit;
+        if (this.props.getRef) this.props.getRef(node);
+      }
+    }, {
+      key: 'validate',
+      value: function validate(nextProps) {
+        var _this2 = this;
+
+        var initial = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : false;
+        var submit = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : false;
+        var _props = this.props,
+            model = _props.model,
+            dispatch = _props.dispatch,
+            formValue = _props.formValue,
+            modelValue = _props.modelValue;
+        var validators = nextProps.validators,
+            errors = nextProps.errors;
+
+
+        if (!formValue) return;
+
+        if (!validators && !errors && modelValue !== nextProps.modelValue) {
+          return;
+        }
+
+        var validatorsChanged = validators !== this.props.validators || errors !== this.props.errors;
+        var fieldKeys = (validators ? Object.keys(validators) : []).concat(errors ? Object.keys(errors) : []);
+
+        var fieldsErrors = {};
+        var validityChanged = false;
+
+        var keysToValidate = [];
+
+        fieldKeys.forEach(function (key) {
+          if (!!~keysToValidate.indexOf(key)) return;
+
+          var valuesChanged = key === '' ? modelValue !== nextProps.modelValue : s.get(modelValue, key) !== s.get(nextProps.modelValue, key);
+
+          if (submit || initial || valuesChanged || validators && _this2.props.validators[key] !== validators[key] || errors && _this2.props.errors[key] !== errors[key] || !!~key.indexOf('[]')) {
+            keysToValidate.push(key);
+          }
+        });
+
+        var validateField = function validateField(field, errorValidator) {
+          if (!!~field.indexOf('[]')) {
+            var _field$split = field.split('[]'),
+                _field$split2 = _slicedToArray(_field$split, 2),
+                parentModel = _field$split2[0],
+                childModel = _field$split2[1];
+
+            var nextValue = parentModel ? s.get(nextProps.modelValue, parentModel) : nextProps.modelValue;
+
+            nextValue.forEach(function (subValue, index) {
+              validateField(parentModel + '[' + index + ']' + childModel, errorValidator);
+            });
+          } else {
+            var _nextValue = field ? s.get(nextProps.modelValue, field) : nextProps.modelValue;
+
+            var currentErrors = (0, _getField2.default)(formValue, field).errors;
+            var fieldErrors = (0, _getValidity2.default)(errorValidator, _nextValue);
+
+            if (!validityChanged && !(0, _shallowEqual2.default)(fieldErrors, currentErrors)) {
+              validityChanged = true;
+            }
+
+            fieldsErrors[field] = (0, _mergeValidity2.default)(fieldsErrors[field], fieldErrors);
+          }
+        };
+
+        keysToValidate.forEach(function (field) {
+          if (validators && validators[field]) {
+            validateField(field, (0, _invertValidators2.default)(validators[field]));
+          }
+          if (errors && errors[field]) {
+            validateField(field, errors[field]);
+          }
+        });
+
+        if (typeof validators === 'function') {
+          var nextValue = nextProps.modelValue;
+          var currentValue = modelValue;
+
+          if (!submit && !initial && !validatorsChanged && nextValue === currentValue) {
+            // If neither the validators nor the values have changed,
+            // the validity didn't change.
+            return;
+          }
+
+          var multiFieldErrors = (0, _getValidity2.default)(validators, nextValue);
+
+          if (multiFieldErrors) {
+            Object.keys(multiFieldErrors).forEach(function (key) {
+              // key will be the model value to apply errors to.
+              var fieldErrors = multiFieldErrors[key];
+              var currentErrors = (0, _getField2.default)(formValue, key).errors;
+
+              // Invert validators
+              Object.keys(fieldErrors).forEach(function (validationName) {
+                fieldErrors[validationName] = !fieldErrors[validationName];
+              });
+
+              if (!validityChanged && !(0, _shallowEqual2.default)(fieldErrors, currentErrors)) {
+                validityChanged = true;
+              }
+
+              fieldsErrors[key] = (0, _mergeValidity2.default)(fieldsErrors[key], fieldErrors);
+            });
+          }
+        }
+
+        // Compute form-level validity
+        if (!fieldsErrors.hasOwnProperty('') && !~fieldKeys.indexOf('')) {
+          fieldsErrors[''] = false;
+          validityChanged = validityChanged || (0, _isValidityInvalid2.default)(formValue.$form.errors);
+        }
+
+        if (validityChanged) {
+          dispatch(s.actions.setFieldsErrors(model, fieldsErrors, { merge: true }));
+        }
+
+        if (submit) {
+          dispatch(s.actions.addIntent(model, { type: 'submit' }));
+        }
+      }
+    }, {
+      key: 'handleValidSubmit',
+      value: function handleValidSubmit(options) {
+        var _props2 = this.props,
+            dispatch = _props2.dispatch,
+            model = _props2.model,
+            modelValue = _props2.modelValue,
+            onSubmit = _props2.onSubmit;
+
+
+        dispatch(s.actions.setPending(model, true, options));
+
+        if (onSubmit) onSubmit(modelValue, this.state.lastSubmitEvent);
+      }
+    }, {
+      key: 'handleInvalidSubmit',
+      value: function handleInvalidSubmit(options) {
+        var _props3 = this.props,
+            onSubmitFailed = _props3.onSubmitFailed,
+            formValue = _props3.formValue,
+            dispatch = _props3.dispatch;
+
+
+        if (onSubmitFailed) {
+          onSubmitFailed(formValue);
+        }
+
+        dispatch(s.actions.setSubmitFailed(this.props.model, true, options));
+      }
+    }, {
+      key: 'handleReset',
+      value: function handleReset(e) {
+        if (e) {
+          e.preventDefault();
+          e.stopPropagation();
+        }
+
+        this.props.dispatch(s.actions.reset(this.props.model));
+      }
+    }, {
+      key: 'handleIntents',
+      value: function handleIntents() {
+        var _this3 = this;
+
+        var _props4 = this.props,
+            formValue = _props4.formValue,
+            noValidate = _props4.noValidate;
+
+
+        formValue.$form.intents.forEach(function (intent) {
+          switch (intent.type) {
+            case 'submit':
+              {
+                if (noValidate || (0, _isValid2.default)(formValue, { async: false })) {
+                  _this3.handleValidSubmit({ clearIntents: intent });
+                } else {
+                  _this3.handleInvalidSubmit({ clearIntents: intent });
+                }
+
+                return;
+              }
+
+            default:
+              return;
+          }
+        });
+      }
+    }, {
+      key: 'handleSubmit',
+      value: function handleSubmit(e) {
+        if (e) {
+          if (!this.props.action) e.preventDefault();
+          e.stopPropagation();
+        }
+        if (e && e.persist) e.persist();
+
+        var _props5 = this.props,
+            modelValue = _props5.modelValue,
+            formValue = _props5.formValue,
+            onSubmit = _props5.onSubmit,
+            validators = _props5.validators,
+            onBeforeSubmit = _props5.onBeforeSubmit;
+
+
+        if (onBeforeSubmit) onBeforeSubmit(e);
+
+        var formValid = formValue ? formValue.$form.valid : true;
+
+        if (!validators && onSubmit && formValid) {
+          onSubmit(modelValue, e);
+
+          return modelValue;
+        }
+
+        this.setState({ lastSubmitEvent: e });
+
+        this.validate(this.props, false, true);
+
+        return modelValue;
+      }
+    }, {
+      key: 'render',
+      value: function render() {
+        var _props6 = this.props,
+            component = _props6.component,
+            children = _props6.children,
+            formValue = _props6.formValue,
+            hideNativeErrors = _props6.hideNativeErrors,
+            noValidate = _props6.noValidate;
+
+
+        var allowedProps = (0, _omit2.default)(this.props, disallowedPropTypeKeys);
+        var renderableChildren = typeof children === 'function' ? children(formValue) : children;
+
+        return _react2.default.createElement(component, _extends({}, allowedProps, {
+          onSubmit: this.handleSubmit,
+          onReset: this.handleReset,
+          ref: this.attachNode,
+          noValidate: hideNativeErrors || noValidate
+        }), renderableChildren);
+      }
+    }]);
+
+    return Form;
+  }(_react.Component);
+
+   true ? Form.propTypes = propTypes : undefined;
+
+  Form.defaultProps = {
+    validateOn: 'change',
+    component: 'form'
+  };
+
+  Form.childContextTypes = {
+    model: _propTypes2.default.any,
+    localStore: _propTypes2.default.shape({
+      subscribe: _propTypes2.default.func,
+      dispatch: _propTypes2.default.func,
+      getState: _propTypes2.default.func
+    })
+  };
+
+  function mapStateToProps(state, _ref) {
+    var model = _ref.model;
+
+    var modelString = (0, _getModel2.default)(model, state);
+    (0, _getForm.clearGetFormCacheForModel)(modelString);
+    var form = s.getForm(state, modelString);
+
+    (0, _invariant2.default)(form, 'Unable to create Form component. ' + 'Could not find form for "%s" in the store.', modelString);
+
+    return {
+      model: modelString,
+      modelValue: s.get(state, modelString),
+      formValue: form
+    };
+  }
+
+  return (0, _reactRedux.connect)(mapStateToProps)(Form);
+}
+
+exports.createFormClass = createFormClass;
+exports.default = createFormClass();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/components/local-form-component.js":
+/*!******************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/components/local-form-component.js ***!
+  \******************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+var _formComponent = __webpack_require__(/*! ./form-component */ "./node_modules/react-redux-form/lib/components/form-component.js");
+
+var _formComponent2 = _interopRequireDefault(_formComponent);
+
+var _formsReducer = __webpack_require__(/*! ../reducers/forms-reducer */ "./node_modules/react-redux-form/lib/reducers/forms-reducer.js");
+
+var _formsReducer2 = _interopRequireDefault(_formsReducer);
+
+var _redux = __webpack_require__(/*! redux */ "./node_modules/redux/es/redux.js");
+
+var _omit = __webpack_require__(/*! ../utils/omit */ "./node_modules/react-redux-form/lib/utils/omit.js");
+
+var _omit2 = _interopRequireDefault(_omit);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+var LocalForm = function (_React$Component) {
+  _inherits(LocalForm, _React$Component);
+
+  function LocalForm(props) {
+    _classCallCheck(this, LocalForm);
+
+    var _this = _possibleConstructorReturn(this, (LocalForm.__proto__ || Object.getPrototypeOf(LocalForm)).call(this, props));
+
+    _this.store = props.store || (0, _redux.createStore)((0, _formsReducer2.default)(_defineProperty({}, props.model, props.initialState)));
+
+    _this.dispatch = function (action) {
+      if (typeof action === 'function') {
+        return action(_this.store.dispatch, _this.store.getState);
+      }
+
+      return _this.store.dispatch(action);
+    };
+    return _this;
+  }
+
+  _createClass(LocalForm, [{
+    key: 'componentDidMount',
+    value: function componentDidMount() {
+      if (this.props.getDispatch) {
+        this.props.getDispatch(this.dispatch);
+      }
+    }
+  }, {
+    key: 'render',
+    value: function render() {
+      var allowedProps = (0, _omit2.default)(this.props, ['store', 'initialState']);
+
+      return _react2.default.createElement(_formComponent2.default, _extends({ store: this.store }, allowedProps));
+    }
+  }]);
+
+  return LocalForm;
+}(_react2.default.Component);
+
+LocalForm.displayName = 'LocalForm';
+
+ true ? LocalForm.propTypes = {
+  store: _propTypes2.default.shape({
+    subscribe: _propTypes2.default.func,
+    dispatch: _propTypes2.default.func,
+    getState: _propTypes2.default.func
+  }),
+
+  // provided props
+  initialState: _propTypes2.default.any,
+  model: _propTypes2.default.string.isRequired,
+  getDispatch: _propTypes2.default.func
+} : undefined;
+
+LocalForm.defaultProps = {
+  initialState: {},
+  model: 'local'
+};
+
+exports.default = LocalForm;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/constants/control-props-map.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/constants/control-props-map.js ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _isMulti = __webpack_require__(/*! ../utils/is-multi */ "./node_modules/react-redux-form/lib/utils/is-multi.js");
+
+var _isMulti2 = _interopRequireDefault(_isMulti);
+
+var _iteratee = __webpack_require__(/*! ../utils/iteratee */ "./node_modules/react-redux-form/lib/utils/iteratee.js");
+
+var _actions = __webpack_require__(/*! ../actions */ "./node_modules/react-redux-form/lib/actions/index.js");
+
+var _actions2 = _interopRequireDefault(_actions);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getTextValue(value) {
+  if (typeof value === 'string') {
+    return '' + value;
+  }
+
+  return value;
+}
+
+function isChecked(props) {
+  if ((0, _isMulti2.default)(props.model)) {
+    if (!props.modelValue) return false;
+
+    return props.modelValue.some(function (item) {
+      return item === props.value;
+    });
+  }
+  if (typeof props.modelValue === 'undefined') {
+    if (typeof props.defaultChecked !== 'undefined') {
+      return props.defaultChecked;
+    }
+  }
+
+  return !!props.modelValue;
+}
+
+var standardPropsMap = {
+  name: function name(props) {
+    return props.name || props.model;
+  },
+  disabled: function disabled(_ref) {
+    var fieldValue = _ref.fieldValue,
+        _disabled = _ref.disabled;
+    return (0, _iteratee.iterateeValue)(fieldValue, _disabled);
+  },
+  onChange: function onChange(_ref2) {
+    var _onChange = _ref2.onChange;
+    return _onChange;
+  },
+  onBlur: function onBlur(_ref3) {
+    var _onBlur = _ref3.onBlur;
+    return _onBlur;
+  },
+  onFocus: function onFocus(_ref4) {
+    var _onFocus = _ref4.onFocus;
+    return _onFocus;
+  },
+  onKeyPress: function onKeyPress(_ref5) {
+    var _onKeyPress = _ref5.onKeyPress;
+    return _onKeyPress;
+  }
+};
+
+var textPropsMap = _extends({}, standardPropsMap, {
+  // the value passed into the control is either the original control's
+  // value prop (if the control is controlled) or the value controlled by
+  // <Control>.
+  value: function value(props) {
+    if (props.hasOwnProperty('value')) {
+      return props.value;
+    }
+
+    var value = getTextValue(props.viewValue);
+
+    return value === undefined ? '' : value;
+  }
+});
+
+var getModelValue = function getModelValue(_ref6) {
+  var modelValue = _ref6.modelValue;
+  return modelValue;
+};
+var getViewValue = function getViewValue(props) {
+  return props.hasOwnProperty('value') ? props.value : props.viewValue;
+};
+
+var controlPropsMap = {
+  default: _extends({}, standardPropsMap, {
+    value: getViewValue
+  }),
+  checkbox: _extends({}, standardPropsMap, {
+    checked: isChecked
+  }),
+  radio: _extends({}, standardPropsMap, {
+    checked: function checked(props) {
+      return props.defaultChecked ? props.checked : props.modelValue === props.value;
+    },
+    value: function value(props) {
+      return props.value;
+    }
+  }),
+  select: _extends({}, standardPropsMap, {
+    value: getViewValue
+  }),
+  text: textPropsMap,
+  textarea: textPropsMap,
+  file: standardPropsMap,
+  button: _extends({}, standardPropsMap, {
+    value: getModelValue
+  }),
+  reset: _extends({}, standardPropsMap, {
+    onClick: function onClick(props) {
+      return function (event) {
+        event.preventDefault();
+        props.dispatch(_actions2.default.reset(props.model));
+      };
+    }
+  })
+};
+
+exports.default = controlPropsMap;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/constants/initial-field-state.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/constants/initial-field-state.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var initialFieldState = {
+  focus: false,
+  pending: false,
+  pristine: true,
+  submitted: false,
+  submitFailed: false,
+  retouched: false,
+  touched: false,
+  valid: true,
+  validating: false,
+  validated: false,
+  validity: {},
+  errors: {},
+  intents: []
+};
+
+exports.default = initialFieldState;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/constants/null-action.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/constants/null-action.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var NULL_ACTION = { type: null };
+
+exports.default = NULL_ACTION;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/constants/validity-keys.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/constants/validity-keys.js ***!
+  \**********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var validityKeys = ['badInput', 'customError', 'patternMismatch', 'rangeOverflow', 'rangeUnderflow', 'stepMismatch', 'tooLong', 'tooShort', 'typeMismatch', 'valueMissing'];
+
+exports.default = validityKeys;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/enhancers/batched-enhancer.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/enhancers/batched-enhancer.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function createBatchReducer(reducer, initialState) {
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var transformAction = options.transformAction;
+
+
+  return function () {
+    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+    var action = arguments[1];
+
+    var transformedAction = transformAction ? transformAction(action) : action;
+
+    if (transformedAction.type === _actionTypes2.default.BATCH) {
+      return transformedAction.actions.reduce(reducer, state);
+    }
+
+    return reducer(state, transformedAction);
+  };
+}
+
+exports.default = createBatchReducer;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/enhancers/modeled-enhancer.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/enhancers/modeled-enhancer.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createModelReducerEnhancer = undefined;
+
+var _modelReducer2 = __webpack_require__(/*! ../reducers/model-reducer */ "./node_modules/react-redux-form/lib/reducers/model-reducer.js");
+
+var _modelReducer3 = _interopRequireDefault(_modelReducer2);
+
+var _nullAction = __webpack_require__(/*! ../constants/null-action */ "./node_modules/react-redux-form/lib/constants/null-action.js");
+
+var _nullAction2 = _interopRequireDefault(_nullAction);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function createModelReducerEnhancer() {
+  var modelReducerCreator = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : _modelReducer3.default;
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+  return function modelReducerEnhancer(reducer, model) {
+    var initialState = void 0;
+    try {
+      initialState = reducer(undefined, _nullAction2.default);
+    } catch (error) {
+      initialState = null;
+    }
+
+    var _modelReducer = modelReducerCreator(model, initialState, options);
+
+    return function () {
+      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+      var action = arguments[1];
+
+      var updatedState = _modelReducer(state, action);
+
+      return reducer(updatedState, action);
+    };
+  };
+}
+
+var modelReducerEnhancer = createModelReducerEnhancer(_modelReducer3.default);
+
+exports.createModelReducerEnhancer = createModelReducerEnhancer;
+exports.default = modelReducerEnhancer;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/form/index.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/form/index.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.isRetouched = exports.isTouched = exports.isPending = exports.isValid = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+exports.default = formSelector;
+
+var _isValid = __webpack_require__(/*! ./is-valid */ "./node_modules/react-redux-form/lib/form/is-valid.js");
+
+var _isValid2 = _interopRequireDefault(_isValid);
+
+var _isPending = __webpack_require__(/*! ./is-pending */ "./node_modules/react-redux-form/lib/form/is-pending.js");
+
+var _isPending2 = _interopRequireDefault(_isPending);
+
+var _isTouched = __webpack_require__(/*! ./is-touched */ "./node_modules/react-redux-form/lib/form/is-touched.js");
+
+var _isTouched2 = _interopRequireDefault(_isTouched);
+
+var _isRetouched = __webpack_require__(/*! ./is-retouched */ "./node_modules/react-redux-form/lib/form/is-retouched.js");
+
+var _isRetouched2 = _interopRequireDefault(_isRetouched);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function formSelector(formState) {
+  return _extends({}, formState, {
+    get valid() {
+      return (0, _isValid2.default)(formState);
+    },
+    get pending() {
+      return (0, _isPending2.default)(formState);
+    },
+    get touched() {
+      return (0, _isTouched2.default)(formState);
+    },
+    get retouched() {
+      return (0, _isRetouched2.default)(formState);
+    }
+  });
+}
+
+exports.isValid = _isValid2.default;
+exports.isPending = _isPending2.default;
+exports.isTouched = _isTouched2.default;
+exports.isRetouched = _isRetouched2.default;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/form/is-pending.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/form/is-pending.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isPending;
+function isPending(formState) {
+  if (!formState) return false;
+
+  // Field is pending
+  if (!formState.$form) {
+    return formState.pending;
+  }
+
+  // Any field in form is pending
+  return Object.keys(formState).some(function (key) {
+    return isPending(formState[key]);
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/form/is-pristine.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/form/is-pristine.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isPristine;
+function isPristine(formState) {
+  if (!formState) return false;
+
+  // Form is pristine
+  if (!formState.$form) {
+    return formState.pristine;
+  }
+
+  // Every field in form is pristine
+  return Object.keys(formState).every(function (key) {
+    if (key === '$form') return true;
+
+    return isPristine(formState[key]);
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/form/is-retouched.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/form/is-retouched.js ***!
+  \****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isRetouched;
+function isRetouched(formState) {
+  if (!formState) return false;
+
+  // Field is pending
+  if (!formState.$form) {
+    return formState.retouched;
+  }
+
+  // Any field in form is pending
+  return Object.keys(formState).some(function (key) {
+    return isRetouched(formState[key]);
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/form/is-touched.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/form/is-touched.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isTouched;
+function isTouched(formState) {
+  if (!formState) return false;
+
+  // Field is touched
+  if (!formState.$form) {
+    return formState.touched;
+  }
+
+  // Any field in form is touched
+  return Object.keys(formState).some(function (key) {
+    return isTouched(formState[key]);
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/form/is-valid.js":
+/*!************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/form/is-valid.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isValid;
+exports.fieldsValid = fieldsValid;
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function isValid(formState) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { async: true };
+
+  if (!formState) return true;
+
+  if (!formState.$form) {
+    var errors = formState.errors;
+
+
+    if (!Array.isArray(errors) && !(0, _isPlainObject2.default)(errors)) {
+      // If asyncKeys = true and the error is not an
+      // array or object (e.g. string), form errors are entirely async
+      // and should be ignored when async = true.
+      return !options.async && formState.asyncKeys || !errors;
+    }
+
+    return Object.keys(formState.errors).every(function (errorKey) {
+      // if specified to ignore async validator keys and
+      // current error key is an async validator key,
+      // treat key as valid
+      if (!options.async && Array.isArray(formState.asyncKeys) && !!~formState.asyncKeys.indexOf(errorKey)) {
+        return true;
+      }
+
+      var valid = !formState.errors[errorKey];
+
+      return valid;
+    });
+  }
+
+  return Object.keys(formState).every(function (key) {
+    return isValid(formState[key], options);
+  });
+}
+
+function fieldsValid(formState) {
+  var options = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : { async: true };
+
+  return Object.keys(formState).every(function (key) {
+    return key === '$form' || isValid(formState[key], options);
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/index.js":
+/*!****************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/index.js ***!
+  \****************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.isValid = exports.track = exports.getModel = exports.getField = exports.form = exports.batched = exports.modeled = exports.createFieldClass = exports.Fieldset = exports.Errors = exports.LocalForm = exports.Form = exports.Control = exports.Field = exports.controls = exports.actionTypes = exports.actions = exports.initialFieldState = exports.createForms = exports.combineForms = exports.modelReducer = exports.formReducer = undefined;
+
+var _actions = __webpack_require__(/*! ./actions */ "./node_modules/react-redux-form/lib/actions/index.js");
+
+var _actions2 = _interopRequireDefault(_actions);
+
+var _actionTypes = __webpack_require__(/*! ./action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _fieldComponent = __webpack_require__(/*! ./components/field-component */ "./node_modules/react-redux-form/lib/components/field-component.js");
+
+var _fieldComponent2 = _interopRequireDefault(_fieldComponent);
+
+var _fieldsetComponent = __webpack_require__(/*! ./components/fieldset-component */ "./node_modules/react-redux-form/lib/components/fieldset-component.js");
+
+var _fieldsetComponent2 = _interopRequireDefault(_fieldsetComponent);
+
+var _controlComponent = __webpack_require__(/*! ./components/control-component */ "./node_modules/react-redux-form/lib/components/control-component.js");
+
+var _controlComponent2 = _interopRequireDefault(_controlComponent);
+
+var _formComponent = __webpack_require__(/*! ./components/form-component */ "./node_modules/react-redux-form/lib/components/form-component.js");
+
+var _formComponent2 = _interopRequireDefault(_formComponent);
+
+var _localFormComponent = __webpack_require__(/*! ./components/local-form-component */ "./node_modules/react-redux-form/lib/components/local-form-component.js");
+
+var _localFormComponent2 = _interopRequireDefault(_localFormComponent);
+
+var _errorsComponent = __webpack_require__(/*! ./components/errors-component */ "./node_modules/react-redux-form/lib/components/errors-component.js");
+
+var _errorsComponent2 = _interopRequireDefault(_errorsComponent);
+
+var _controlPropsMap = __webpack_require__(/*! ./constants/control-props-map */ "./node_modules/react-redux-form/lib/constants/control-props-map.js");
+
+var _controlPropsMap2 = _interopRequireDefault(_controlPropsMap);
+
+var _modeledEnhancer = __webpack_require__(/*! ./enhancers/modeled-enhancer */ "./node_modules/react-redux-form/lib/enhancers/modeled-enhancer.js");
+
+var _modeledEnhancer2 = _interopRequireDefault(_modeledEnhancer);
+
+var _batchedEnhancer = __webpack_require__(/*! ./enhancers/batched-enhancer */ "./node_modules/react-redux-form/lib/enhancers/batched-enhancer.js");
+
+var _batchedEnhancer2 = _interopRequireDefault(_batchedEnhancer);
+
+var _formReducer = __webpack_require__(/*! ./reducers/form-reducer */ "./node_modules/react-redux-form/lib/reducers/form-reducer.js");
+
+var _formReducer2 = _interopRequireDefault(_formReducer);
+
+var _initialFieldState = __webpack_require__(/*! ./constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+var _formsReducer = __webpack_require__(/*! ./reducers/forms-reducer */ "./node_modules/react-redux-form/lib/reducers/forms-reducer.js");
+
+var _formsReducer2 = _interopRequireDefault(_formsReducer);
+
+var _modelReducer = __webpack_require__(/*! ./reducers/model-reducer */ "./node_modules/react-redux-form/lib/reducers/model-reducer.js");
+
+var _modelReducer2 = _interopRequireDefault(_modelReducer);
+
+var _track = __webpack_require__(/*! ./utils/track */ "./node_modules/react-redux-form/lib/utils/track.js");
+
+var _track2 = _interopRequireDefault(_track);
+
+var _isValid = __webpack_require__(/*! ./form/is-valid */ "./node_modules/react-redux-form/lib/form/is-valid.js");
+
+var _isValid2 = _interopRequireDefault(_isValid);
+
+var _getFieldFromState = __webpack_require__(/*! ./utils/get-field-from-state */ "./node_modules/react-redux-form/lib/utils/get-field-from-state.js");
+
+var _getFieldFromState2 = _interopRequireDefault(_getFieldFromState);
+
+var _get = __webpack_require__(/*! ./utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _form = __webpack_require__(/*! ./form */ "./node_modules/react-redux-form/lib/form/index.js");
+
+var _form2 = _interopRequireDefault(_form);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+exports.formReducer = _formReducer2.default;
+exports.modelReducer = _modelReducer2.default;
+exports.combineForms = _formsReducer2.default;
+exports.createForms = _formsReducer.createForms;
+exports.initialFieldState = _initialFieldState2.default;
+exports.actions = _actions2.default;
+exports.actionTypes = _actionTypes2.default;
+exports.controls = _controlPropsMap2.default;
+exports.Field = _fieldComponent2.default;
+exports.Control = _controlComponent2.default;
+exports.Form = _formComponent2.default;
+exports.LocalForm = _localFormComponent2.default;
+exports.Errors = _errorsComponent2.default;
+exports.Fieldset = _fieldsetComponent2.default;
+exports.createFieldClass = _fieldComponent.createFieldClass;
+exports.modeled = _modeledEnhancer2.default;
+exports.batched = _batchedEnhancer2.default;
+exports.form = _form2.default;
+exports.getField = _getFieldFromState2.default;
+exports.getModel = _get2.default;
+exports.track = _track2.default;
+exports.isValid = _isValid2.default;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/reducers/form-actions-reducer.js":
+/*!****************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/reducers/form-actions-reducer.js ***!
+  \****************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+exports.createFormActionsReducer = createFormActionsReducer;
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _updateField = __webpack_require__(/*! ../utils/update-field */ "./node_modules/react-redux-form/lib/utils/update-field.js");
+
+var _updateField2 = _interopRequireDefault(_updateField);
+
+var _updateParentForms = __webpack_require__(/*! ../utils/update-parent-forms */ "./node_modules/react-redux-form/lib/utils/update-parent-forms.js");
+
+var _updateParentForms2 = _interopRequireDefault(_updateParentForms);
+
+var _updateSubFields = __webpack_require__(/*! ../utils/update-sub-fields */ "./node_modules/react-redux-form/lib/utils/update-sub-fields.js");
+
+var _updateSubFields2 = _interopRequireDefault(_updateSubFields);
+
+var _getFieldForm = __webpack_require__(/*! ../utils/get-field-form */ "./node_modules/react-redux-form/lib/utils/get-field-form.js");
+
+var _getFieldForm2 = _interopRequireDefault(_getFieldForm);
+
+var _isPristine = __webpack_require__(/*! ../form/is-pristine */ "./node_modules/react-redux-form/lib/form/is-pristine.js");
+
+var _isPristine2 = _interopRequireDefault(_isPristine);
+
+var _map = __webpack_require__(/*! ../utils/map */ "./node_modules/react-redux-form/lib/utils/map.js");
+
+var _map2 = _interopRequireDefault(_map);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _mapValues = __webpack_require__(/*! ../utils/map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _inverse = __webpack_require__(/*! ../utils/inverse */ "./node_modules/react-redux-form/lib/utils/inverse.js");
+
+var _inverse2 = _interopRequireDefault(_inverse);
+
+var _mergeValidity = __webpack_require__(/*! ../utils/merge-validity */ "./node_modules/react-redux-form/lib/utils/merge-validity.js");
+
+var _mergeValidity2 = _interopRequireDefault(_mergeValidity);
+
+var _isValid = __webpack_require__(/*! ../form/is-valid */ "./node_modules/react-redux-form/lib/form/is-valid.js");
+
+var _isValid2 = _interopRequireDefault(_isValid);
+
+var _isValidityValid = __webpack_require__(/*! ../utils/is-validity-valid */ "./node_modules/react-redux-form/lib/utils/is-validity-valid.js");
+
+var _isValidityValid2 = _interopRequireDefault(_isValidityValid);
+
+var _isValidityInvalid = __webpack_require__(/*! ../utils/is-validity-invalid */ "./node_modules/react-redux-form/lib/utils/is-validity-invalid.js");
+
+var _isValidityInvalid2 = _interopRequireDefault(_isValidityInvalid);
+
+var _fieldActions = __webpack_require__(/*! ../actions/field-actions */ "./node_modules/react-redux-form/lib/actions/field-actions.js");
+
+var _fieldActions2 = _interopRequireDefault(_fieldActions);
+
+var _toPath = __webpack_require__(/*! ../utils/to-path */ "./node_modules/react-redux-form/lib/utils/to-path.js");
+
+var _toPath2 = _interopRequireDefault(_toPath);
+
+var _initialFieldState = __webpack_require__(/*! ../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+var _createField = __webpack_require__(/*! ../utils/create-field */ "./node_modules/react-redux-form/lib/utils/create-field.js");
+
+var _assocIn = __webpack_require__(/*! ../utils/assoc-in */ "./node_modules/react-redux-form/lib/utils/assoc-in.js");
+
+var _assocIn2 = _interopRequireDefault(_assocIn);
+
+var _getFormValue = __webpack_require__(/*! ../utils/get-form-value */ "./node_modules/react-redux-form/lib/utils/get-form-value.js");
+
+var _getFormValue2 = _interopRequireDefault(_getFormValue);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var resetFieldState = function resetFieldState(field, customInitialFieldState) {
+  if (!(0, _isPlainObject2.default)(field)) return field;
+
+  var intents = [{ type: 'reset' }];
+  var resetValue = (0, _createField.getMeta)(field, 'initialValue');
+  var loadedValue = (0, _createField.getMeta)(field, 'loadedValue');
+
+  if (loadedValue && resetValue !== loadedValue) {
+    intents.push({ type: 'load' });
+    resetValue = loadedValue;
+  }
+  return (0, _createField.fieldOrForm)((0, _createField.getMeta)(field, 'model'), resetValue, _extends({}, customInitialFieldState, { intents: intents }));
+};
+
+var setInitialFieldState = function setInitialFieldState(customInitialFieldState) {
+  return function (field) {
+    if (!(0, _isPlainObject2.default)(field)) return field;
+
+    if (field.$form) {
+      // eslint-disable-next-line arrow-body-style
+      return (0, _mapValues2.default)(field, function (fieldState, key) {
+        return key === '$form' ? (0, _createField.updateFieldState)(customInitialFieldState, {
+          value: field.value,
+          model: field.model
+        }) : resetFieldState(fieldState, customInitialFieldState);
+      });
+    }
+
+    return (0, _createField.updateFieldState)(customInitialFieldState, {
+      value: field.value,
+      model: field.model
+    });
+  };
+};
+
+var addIntent = function addIntent(intents, newIntent) {
+  if (!intents) return [newIntent];
+  if (intents.some(function (intent) {
+    return intent.type === newIntent.type;
+  })) return intents;
+
+  return intents.concat(newIntent);
+};
+
+var clearIntents = function clearIntents(intents, oldIntent) {
+  if (!intents || typeof oldIntent === 'undefined') return [];
+  return intents.filter(function (intent) {
+    return intent.type !== oldIntent.type;
+  });
+};
+
+var defaultOptions = {
+  initialFieldState: _initialFieldState2.default
+};
+
+function createFormActionsReducer(options) {
+  var formOptions = options ? _extends({}, defaultOptions, options, {
+    initialFieldState: _extends({}, defaultOptions.initialFieldState, options.initialFieldState)
+  }) : defaultOptions;
+
+  var customInitialFieldState = formOptions.initialFieldState;
+
+  return function formActionsReducer(state, action, localPath) {
+    var _getFieldAndForm = (0, _updateField.getFieldAndForm)(state, localPath),
+        _getFieldAndForm2 = _slicedToArray(_getFieldAndForm, 1),
+        field = _getFieldAndForm2[0];
+
+    var fieldState = field && field.$form ? field.$form : field;
+
+    var intents = fieldState.intents;
+
+
+    var fieldUpdates = {};
+    var subFieldUpdates = {};
+    var parentFormUpdates = void 0;
+
+    switch (action.type) {
+      case _actionTypes2.default.FOCUS:
+        {
+          fieldUpdates = {
+            focus: true,
+            intents: action.silent ? intents : addIntent(intents, action)
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.BLUR:
+      case _actionTypes2.default.SET_TOUCHED:
+        {
+          var fieldForm = (0, _getFieldForm2.default)(state, localPath).$form;
+
+          fieldUpdates = {
+            focus: action.type === _actionTypes2.default.BLUR ? false : field.focus,
+            touched: true,
+            retouched: fieldForm ? !!(fieldForm.submitted || fieldForm.submitFailed) : false
+          };
+
+          parentFormUpdates = {
+            touched: true,
+            retouched: fieldUpdates.retouched
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_UNTOUCHED:
+        {
+          fieldUpdates = {
+            focus: false,
+            touched: false
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_PRISTINE:
+      case _actionTypes2.default.SET_DIRTY:
+        {
+          var pristine = action.type === _actionTypes2.default.SET_PRISTINE;
+
+          fieldUpdates = {
+            pristine: pristine
+          };
+
+          subFieldUpdates = {
+            pristine: pristine
+          };
+
+          parentFormUpdates = function parentFormUpdates(form) {
+            return { pristine: (0, _isPristine2.default)(form) };
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_VALIDATING:
+        {
+          fieldUpdates = {
+            validating: action.validating,
+            validated: !action.validating
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_VALIDITY:
+      case _actionTypes2.default.SET_ERRORS:
+        {
+          var _fieldUpdates;
+
+          var isErrors = action.type === _actionTypes2.default.SET_ERRORS;
+          var validity = void 0;
+          if (isErrors) {
+            validity = action.merge ? (0, _mergeValidity2.default)(fieldState.errors, action.errors) : action.errors;
+          } else {
+            validity = action.merge ? (0, _mergeValidity2.default)(fieldState.validity, action.validity) : action.validity;
+          }
+
+          var inverseValidity = (0, _isPlainObject2.default)(validity) ? (0, _mapValues2.default)(validity, _inverse2.default) : !validity;
+
+          // If the field is a form, its validity is
+          // also based on whether its fields are all valid.
+          var areFieldsValid = field && field.$form ? (0, _isValid.fieldsValid)(field, { async: false }) : true;
+
+          fieldUpdates = (_fieldUpdates = {}, _defineProperty(_fieldUpdates, isErrors ? 'errors' : 'validity', validity), _defineProperty(_fieldUpdates, isErrors ? 'validity' : 'errors', inverseValidity), _defineProperty(_fieldUpdates, 'validating', false), _defineProperty(_fieldUpdates, 'validated', true), _defineProperty(_fieldUpdates, 'valid', areFieldsValid && (isErrors ? !(0, _isValidityInvalid2.default)(validity) : (0, _isValidityValid2.default)(validity))), _fieldUpdates);
+
+          if (action.async) {
+            var actionValidity = isErrors ? action.errors : action.validity;
+
+            fieldUpdates.asyncKeys = (0, _isPlainObject2.default)(actionValidity) || Array.isArray(actionValidity) ? Object.keys(actionValidity) : true;
+          }
+
+          parentFormUpdates = function parentFormUpdates(form) {
+            return { valid: (0, _isValid2.default)(form) };
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_FIELDS_VALIDITY:
+        {
+          return (0, _map2.default)(action.fieldsValidity, function (fieldValidity, subField) {
+            return _fieldActions2.default.setValidity(subField, fieldValidity, action.options);
+          }).reduce(function (accState, subAction) {
+            return formActionsReducer(accState, subAction, localPath.concat((0, _toPath2.default)(subAction.model)));
+          }, state);
+        }
+
+      case _actionTypes2.default.RESET_VALIDITY:
+        {
+          var _validity = _extends({}, fieldState.validity);
+          var errors = void 0;
+          var valid = void 0;
+
+          if (action.omitKeys && typeof fieldState.errors !== 'string') {
+            errors = _extends({}, fieldState.errors);
+            action.omitKeys.forEach(function (key) {
+              delete _validity[key];
+              delete errors[key];
+            });
+            valid = (0, _isValidityValid2.default)(_validity);
+          } else {
+            _validity = customInitialFieldState.validity;
+            errors = customInitialFieldState.errors;
+            valid = customInitialFieldState.valid;
+          }
+
+          fieldUpdates = {
+            valid: valid,
+            validity: _validity,
+            errors: errors
+          };
+
+          subFieldUpdates = {
+            valid: customInitialFieldState.valid,
+            validity: customInitialFieldState.validity,
+            errors: customInitialFieldState.errors
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_PENDING:
+        {
+          fieldUpdates = {
+            pending: action.pending,
+            submitted: false,
+            submitFailed: false,
+            retouched: false
+          };
+
+          subFieldUpdates = {
+            pending: action.pending,
+            submitted: false,
+            submitFailed: false,
+            retouched: false
+          };
+
+          parentFormUpdates = { pending: action.pending };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_SUBMITTED:
+        {
+          var submitted = !!action.submitted;
+
+          fieldUpdates = {
+            pending: false,
+            submitted: submitted,
+            submitFailed: submitted ? false : fieldState && fieldState.submitFailed,
+            touched: true,
+            retouched: false
+          };
+
+          subFieldUpdates = {
+            pending: false,
+            submitted: submitted,
+            submitFailed: submitted ? false : fieldUpdates.submitFailed,
+            retouched: false
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.SET_SUBMIT_FAILED:
+        {
+          fieldUpdates = {
+            pending: false,
+            submitted: fieldState.submitted && !action.submitFailed,
+            submitFailed: !!action.submitFailed,
+            touched: true,
+            retouched: false
+          };
+
+          subFieldUpdates = {
+            pending: false,
+            submitted: !action.submitFailed,
+            submitFailed: !!action.submitFailed,
+            touched: true,
+            retouched: false
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.RESET:
+        {
+          return localPath.length ? (0, _assocIn2.default)(state, localPath, resetFieldState(field, customInitialFieldState)) : resetFieldState(field, customInitialFieldState);
+        }
+
+      case _actionTypes2.default.SET_INITIAL:
+        {
+          var setCustomInitialFieldState = setInitialFieldState(customInitialFieldState);
+
+          return (0, _updateField2.default)(state, localPath, setCustomInitialFieldState, setCustomInitialFieldState);
+        }
+
+      case _actionTypes2.default.ADD_INTENT:
+        {
+          fieldUpdates = {
+            intents: addIntent(intents, action.intent)
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.CLEAR_INTENTS:
+        {
+          fieldUpdates = {
+            intents: clearIntents(intents, action.intent)
+          };
+
+          break;
+        }
+
+      case _actionTypes2.default.CHANGE:
+        {
+          return (0, _updateParentForms2.default)(state, localPath, function (parentForm) {
+            var formModelValue = (0, _getFormValue2.default)(parentForm);
+
+            if (!parentForm.$form) {
+              return _extends({}, customInitialFieldState, {
+                value: formModelValue,
+                initialValue: formModelValue
+              });
+            }
+
+            // If the form is invalid (due to async validity)
+            // but its fields are valid and the value has changed,
+            // the form should be "valid" again.
+            if ((!parentForm.$form.validity || typeof parentForm.$form.validity === 'boolean' || !Object.keys(parentForm.$form.validity).length) && !parentForm.$form.valid && (0, _isValid2.default)(parentForm, { async: false })) {
+              return {
+                value: formModelValue,
+                validity: true,
+                errors: false,
+                valid: true
+              };
+            }
+
+            return {
+              value: formModelValue
+            };
+          });
+        }
+
+      default:
+        return state;
+    }
+
+    if (action.clearIntents) {
+      fieldUpdates.intents = clearIntents(intents, action.clearIntents);
+    }
+
+    var updatedField = (0, _updateField2.default)(state, localPath, fieldUpdates);
+    var updatedSubFields = Object.keys(subFieldUpdates).length ? (0, _updateSubFields2.default)(updatedField, localPath, subFieldUpdates) : updatedField;
+    var updatedParentForms = parentFormUpdates ? (0, _updateParentForms2.default)(updatedSubFields, localPath, parentFormUpdates) : updatedSubFields;
+
+    return updatedParentForms;
+  };
+}
+
+exports.default = createFormActionsReducer();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/reducers/form-reducer.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/reducers/form-reducer.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createInitialState = createInitialState;
+exports.default = createFormReducer;
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _arraysEqual = __webpack_require__(/*! ../utils/arrays-equal */ "./node_modules/react-redux-form/lib/utils/arrays-equal.js");
+
+var _arraysEqual2 = _interopRequireDefault(_arraysEqual);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _toPath = __webpack_require__(/*! ../utils/to-path */ "./node_modules/react-redux-form/lib/utils/to-path.js");
+
+var _toPath2 = _interopRequireDefault(_toPath);
+
+var _composeReducers = __webpack_require__(/*! ../utils/compose-reducers */ "./node_modules/react-redux-form/lib/utils/compose-reducers.js");
+
+var _composeReducers2 = _interopRequireDefault(_composeReducers);
+
+var _batchedEnhancer = __webpack_require__(/*! ../enhancers/batched-enhancer */ "./node_modules/react-redux-form/lib/enhancers/batched-enhancer.js");
+
+var _batchedEnhancer2 = _interopRequireDefault(_batchedEnhancer);
+
+var _changeActionReducer = __webpack_require__(/*! ./form/change-action-reducer */ "./node_modules/react-redux-form/lib/reducers/form/change-action-reducer.js");
+
+var _changeActionReducer2 = _interopRequireDefault(_changeActionReducer);
+
+var _formActionsReducer = __webpack_require__(/*! ./form-actions-reducer */ "./node_modules/react-redux-form/lib/reducers/form-actions-reducer.js");
+
+var _createField = __webpack_require__(/*! ../utils/create-field */ "./node_modules/react-redux-form/lib/utils/create-field.js");
+
+var _createField2 = _interopRequireDefault(_createField);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function createInitialState(model, state) {
+  var customInitialFieldState = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+  if (Array.isArray(state) || (0, _isPlainObject2.default)(state)) {
+    return (0, _createField.createFormState)(model, state, customInitialFieldState, options);
+  }
+
+  return (0, _createField2.default)(model, state, customInitialFieldState, options);
+}
+
+function wrapFormReducer(plugin, modelPath, initialState) {
+  return function () {
+    var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+    var action = arguments[1];
+
+    if (!action.model) return state;
+
+    var path = (0, _toPath2.default)(action.model);
+
+    if (modelPath.length && !(0, _arraysEqual2.default)(path.slice(0, modelPath.length), modelPath)) {
+      return state;
+    }
+
+    var localPath = path.slice(modelPath.length);
+
+    return plugin(state, action, localPath);
+  };
+}
+
+function createFormReducer(model) {
+  var initialState = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+  var _options$plugins = options.plugins,
+      plugins = _options$plugins === undefined ? [] : _options$plugins,
+      customInitialFieldState = options.initialFieldState,
+      _options$transformAct = options.transformAction,
+      transformAction = _options$transformAct === undefined ? null : _options$transformAct;
+
+  var modelPath = (0, _toPath2.default)(model);
+  var initialFormState = createInitialState(model, initialState, customInitialFieldState, options);
+
+  var defaultPlugins = [_changeActionReducer2.default, (0, _formActionsReducer.createFormActionsReducer)({ initialFieldState: customInitialFieldState })];
+
+  var wrappedPlugins = plugins.concat(defaultPlugins).map(function (plugin) {
+    return wrapFormReducer(plugin, modelPath, initialFormState);
+  });
+
+  return (0, _batchedEnhancer2.default)(_composeReducers2.default.apply(undefined, _toConsumableArray(wrappedPlugins)), undefined, {
+    transformAction: transformAction
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/reducers/form/change-action-reducer.js":
+/*!**********************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/reducers/form/change-action-reducer.js ***!
+  \**********************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+exports.default = changeActionReducer;
+
+var _actionTypes = __webpack_require__(/*! ../../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+var _get = __webpack_require__(/*! ../../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _shallowEqual = __webpack_require__(/*! ../../utils/shallow-equal */ "./node_modules/react-redux-form/lib/utils/shallow-equal.js");
+
+var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
+
+var _isPlainObject = __webpack_require__(/*! ../../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _mapValues = __webpack_require__(/*! ../../utils/map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _formReducer = __webpack_require__(/*! ../form-reducer */ "./node_modules/react-redux-form/lib/reducers/form-reducer.js");
+
+var _initialFieldState = __webpack_require__(/*! ../../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+var _assocIn = __webpack_require__(/*! ../../utils/assoc-in */ "./node_modules/react-redux-form/lib/utils/assoc-in.js");
+
+var _assocIn2 = _interopRequireDefault(_assocIn);
+
+var _getFormValue = __webpack_require__(/*! ../../utils/get-form-value */ "./node_modules/react-redux-form/lib/utils/get-form-value.js");
+
+var _getFormValue2 = _interopRequireDefault(_getFormValue);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function updateFieldValue(field, action) {
+  var parentModel = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : undefined;
+  var value = action.value,
+      removeKeys = action.removeKeys,
+      silent = action.silent,
+      load = action.load,
+      model = action.model,
+      external = action.external;
+
+
+  var fieldState = field && field.$form ? field.$form : field;
+
+  var changedFieldProps = {
+    validated: false,
+    retouched: fieldState.submitted ? true : fieldState.retouched,
+    // If change originated from Control component (not externally),
+    // then there is no need to remind Control to validate itself.
+    intents: external ? [{ type: 'validate' }] : [],
+    pristine: silent ? fieldState.pristine : false,
+    value: value,
+    loadedValue: load ? value : fieldState.loadedValue
+  };
+
+  if ((0, _shallowEqual2.default)(field.value, value)) {
+    return _icepick2.default.merge(field, changedFieldProps);
+  }
+
+  if (removeKeys) {
+    (0, _invariant2.default)(field && field.$form, 'Unable to remove keys. ' + 'Field for "%s" in store is not an array/object.', model);
+
+    var valueIsArray = Array.isArray(field.$form.value);
+    var removeKeysArray = Array.isArray(removeKeys) ? removeKeys : [removeKeys];
+
+    var result = void 0;
+
+    if (valueIsArray) {
+      result = [];
+
+      Object.keys(field).forEach(function (key) {
+        if (!!~removeKeysArray.indexOf(+key) || key === '$form') return;
+
+        result[key] = _extends({}, field[key]);
+      });
+
+      var finalResult = _extends({}, result.filter(function (f) {
+        return f;
+      }).map(function (subField, index) {
+        return _extends({}, subField, {
+          model: model + '.' + index
+        });
+      }));
+
+      finalResult.$form = field.$form;
+
+      return finalResult;
+    }
+
+    result = _extends({}, field);
+
+    Object.keys(field).forEach(function (key) {
+      if (!!~removeKeysArray.indexOf(key)) {
+        delete result['' + key];
+      }
+    });
+
+    return result;
+  }
+
+  if (!Array.isArray(value) && !(0, _isPlainObject2.default)(value)) {
+    return _icepick2.default.merge(field, _icepick2.default.set(changedFieldProps, 'value', value));
+  }
+
+  var updatedField = (0, _mapValues2.default)(value, function (subValue, index) {
+    // TODO: refactor
+    var subField = field[index] || (0, _formReducer.createInitialState)('' + (parentModel ? parentModel + '.' : '') + model + '.' + index, subValue);
+
+    if (Object.hasOwnProperty.call(subField, '$form')) {
+      return updateFieldValue(subField, {
+        model: index,
+        value: subValue,
+        external: external,
+        silent: silent,
+        load: load
+      }, parentModel ? parentModel + '.' + model : model);
+    }
+
+    if ((0, _shallowEqual2.default)(subValue, subField.value)) {
+      return subField;
+    }
+
+    return _icepick2.default.merge(subField, _icepick2.default.assign(changedFieldProps, {
+      value: subValue,
+      loadedValue: load ? subValue : subField.loadedValue
+    }));
+  });
+
+  var dirtyFormState = _icepick2.default.merge(field.$form || _initialFieldState2.default, _icepick2.default.set(changedFieldProps, 'retouched', field.submitted || field.$form && field.$form.retouched));
+
+  return _icepick2.default.set(updatedField, '$form', dirtyFormState);
+}
+
+function changeActionReducer(state, action, localPath) {
+  if (action.type !== _actionTypes2.default.CHANGE) return state;
+
+  var field = (0, _get2.default)(state, localPath, (0, _formReducer.createInitialState)(action.model, action.value));
+
+  var updatedField = updateFieldValue(field, action);
+
+  if (!localPath.length) return updatedField;
+
+  var updatedState = (0, _assocIn2.default)(state, localPath, updatedField, function (form) {
+    if (!form.$form) return form;
+
+    var formValue = (0, _getFormValue2.default)(form);
+
+    var formUpdates = _extends({}, form.$form, {
+      value: formValue
+    });
+
+    if (action.silent) {
+      formUpdates.loadedValue = formValue;
+    } else {
+      formUpdates.pristine = false;
+    }
+
+    return _extends({}, form, {
+      $form: formUpdates
+    });
+  });
+
+  return updatedState;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/reducers/forms-reducer.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/reducers/forms-reducer.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createForms = exports.createFormCombiner = undefined;
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _modeledEnhancer = __webpack_require__(/*! ../enhancers/modeled-enhancer */ "./node_modules/react-redux-form/lib/enhancers/modeled-enhancer.js");
+
+var _modeledEnhancer2 = _interopRequireDefault(_modeledEnhancer);
+
+var _modelReducer = __webpack_require__(/*! ./model-reducer */ "./node_modules/react-redux-form/lib/reducers/model-reducer.js");
+
+var _modelReducer2 = _interopRequireDefault(_modelReducer);
+
+var _formReducer = __webpack_require__(/*! ./form-reducer */ "./node_modules/react-redux-form/lib/reducers/form-reducer.js");
+
+var _formReducer2 = _interopRequireDefault(_formReducer);
+
+var _redux = __webpack_require__(/*! redux */ "./node_modules/redux/es/redux.js");
+
+var _identity = __webpack_require__(/*! ../utils/identity */ "./node_modules/react-redux-form/lib/utils/identity.js");
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _nullAction = __webpack_require__(/*! ../constants/null-action */ "./node_modules/react-redux-form/lib/constants/null-action.js");
+
+var _nullAction2 = _interopRequireDefault(_nullAction);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function _objectWithoutProperties(obj, keys) { var target = {}; for (var i in obj) { if (keys.indexOf(i) >= 0) continue; if (!Object.prototype.hasOwnProperty.call(obj, i)) continue; target[i] = obj[i]; } return target; }
+
+var defaults = {
+  key: 'forms',
+  plugins: []
+};
+
+function getSubModelString(model, subModel) {
+  if (!model) return subModel;
+
+  return model + '.' + subModel;
+}
+
+var defaultStrategy = {
+  modelReducer: _modelReducer2.default,
+  formReducer: _formReducer2.default,
+  modeled: _modeledEnhancer2.default,
+  toJS: _identity2.default
+};
+
+function createFormCombiner() {
+  var strategy = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategy;
+
+  function createForms(forms) {
+    var model = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    var formKeys = Object.keys(forms);
+    var modelReducers = {};
+    var initialFormState = {};
+    var optionsWithDefaults = _extends({}, defaults, options);
+
+    var key = optionsWithDefaults.key,
+        plugins = optionsWithDefaults.plugins,
+        formOptions = _objectWithoutProperties(optionsWithDefaults, ['key', 'plugins']);
+
+    formKeys.forEach(function (formKey) {
+      var formValue = forms[formKey];
+      var subModel = getSubModelString(model, formKey);
+
+      if (typeof formValue === 'function') {
+        var initialState = void 0;
+        try {
+          initialState = formValue(undefined, _nullAction2.default);
+        } catch (error) {
+          initialState = null;
+        }
+
+        modelReducers[formKey] = strategy.modeled(formValue, subModel);
+        initialFormState[formKey] = strategy.toJS(initialState);
+      } else {
+        modelReducers[formKey] = strategy.modelReducer(subModel, formValue);
+        initialFormState[formKey] = strategy.toJS(formValue);
+      }
+    });
+
+    return _extends({}, modelReducers, _defineProperty({}, key, function (state, action) {
+      return strategy.formReducer(model, initialFormState, _extends({
+        plugins: plugins
+      }, formOptions))(state, action);
+    }));
+  }
+
+  function combineForms(forms) {
+    var model = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : '';
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    var mappedReducers = createForms(forms, model, options);
+
+    return (0, _redux.combineReducers)(mappedReducers);
+  }
+
+  return {
+    createForms: createForms,
+    combineForms: combineForms
+  };
+}
+
+var _createFormCombiner = createFormCombiner(),
+    defaultCombineForms = _createFormCombiner.combineForms,
+    defaultCreateForms = _createFormCombiner.createForms;
+
+exports.default = defaultCombineForms;
+exports.createFormCombiner = createFormCombiner;
+exports.createForms = defaultCreateForms;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/reducers/model-reducer.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/reducers/model-reducer.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.createModeler = undefined;
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+var _arraysEqual = __webpack_require__(/*! ../utils/arrays-equal */ "./node_modules/react-redux-form/lib/utils/arrays-equal.js");
+
+var _arraysEqual2 = _interopRequireDefault(_arraysEqual);
+
+var _toPath = __webpack_require__(/*! ../utils/to-path */ "./node_modules/react-redux-form/lib/utils/to-path.js");
+
+var _toPath2 = _interopRequireDefault(_toPath);
+
+var _actionTypes = __webpack_require__(/*! ../action-types */ "./node_modules/react-redux-form/lib/action-types.js");
+
+var _actionTypes2 = _interopRequireDefault(_actionTypes);
+
+var _batchedEnhancer = __webpack_require__(/*! ../enhancers/batched-enhancer */ "./node_modules/react-redux-form/lib/enhancers/batched-enhancer.js");
+
+var _batchedEnhancer2 = _interopRequireDefault(_batchedEnhancer);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function icepickSet(state, path, value) {
+  return _icepick2.default.setIn(state, path, value);
+}
+
+var defaultStrategy = {
+  get: _get3.default,
+  set: icepickSet,
+  object: {}
+};
+
+function createModeler() {
+  var strategy = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategy;
+  var getter = strategy.get,
+      setter = strategy.set,
+      object = strategy.object;
+
+
+  return function _createModelReducer(model) {
+    var initialState = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : object;
+    var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+    var modelPath = (0, _toPath2.default)(model);
+
+    var modelReducer = function modelReducer() {
+      var state = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : initialState;
+      var action = arguments[1];
+
+      if (!action.model) {
+        return state;
+      }
+
+      var path = (0, _toPath2.default)(action.model);
+
+      if (!(0, _arraysEqual2.default)(path.slice(0, modelPath.length), modelPath)) {
+        return state;
+      }
+
+      var localPath = path.slice(modelPath.length);
+
+      switch (action.type) {
+        case _actionTypes2.default.CHANGE:
+          if (!localPath.length) {
+            return action.value;
+          }
+
+          if (getter(state, localPath) === action.value) {
+            return state;
+          }
+
+          return setter(state, localPath, action.value);
+
+        case _actionTypes2.default.RESET:
+          if (!localPath.length) {
+            return initialState;
+          }
+
+          if (getter(state, localPath) === getter(initialState, localPath)) {
+            return state;
+          }
+
+          return setter(state, localPath, getter(initialState, localPath));
+
+        default:
+          return state;
+      }
+    };
+
+    return (0, _batchedEnhancer2.default)(modelReducer, initialState, options);
+  };
+}
+
+var modelReducer = createModeler();
+
+exports.createModeler = createModeler;
+exports.default = modelReducer;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/arrays-equal.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/arrays-equal.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = arraysEqual;
+function arraysEqual(firstArray, secondArray) {
+  return firstArray && secondArray && firstArray.length === secondArray.length && firstArray.every(function (item, index) {
+    return item === secondArray[index];
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/assoc-in.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/assoc-in.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.assoc = assoc;
+exports.default = assocIn;
+
+var _identity = __webpack_require__(/*! ./identity */ "./node_modules/react-redux-form/lib/utils/identity.js");
+
+var _identity2 = _interopRequireDefault(_identity);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function objClone(obj) {
+  var keys = Object.keys(obj);
+  var length = keys.length;
+  var result = {};
+  var index = 0;
+  var key = void 0;
+
+  for (; index < length; index += 1) {
+    key = keys[index];
+    result[key] = obj[key];
+  }
+  return result;
+}
+
+function assoc(state, key, value) {
+  var newState = objClone(state);
+
+  newState[key] = value;
+
+  return newState;
+}
+
+function assocIn(state, path, value) {
+  var fn = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : _identity2.default;
+
+  if (!path.length) return value;
+
+  var key0 = path[0];
+
+  if (path.length === 1) {
+    return fn(assoc(state, key0, value));
+  }
+
+  return fn(assoc(state, key0, assocIn(state[key0] || {}, path.slice(1), value, fn)));
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/compose-reducers.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/compose-reducers.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = compose;
+function compose() {
+  for (var _len = arguments.length, reducers = Array(_len), _key = 0; _key < _len; _key++) {
+    reducers[_key] = arguments[_key];
+  }
+
+  return function (state, action) {
+    return reducers.reduceRight(function (prevState, reducer) {
+      return reducer(prevState, action);
+    }, state);
+  };
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/contains-event.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/contains-event.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = containsEvent;
+function containsEvent(events, event) {
+  if (typeof events === 'string') {
+    return events === event;
+  }
+
+  return !!~events.indexOf(event);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/create-field.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/create-field.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+exports.fieldOrForm = fieldOrForm;
+exports.getMeta = getMeta;
+exports.updateFieldState = updateFieldState;
+exports.default = createFieldState;
+exports.createFormState = createFormState;
+
+var _initialFieldState = __webpack_require__(/*! ../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _mapValues = __webpack_require__(/*! ./map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+/* eslint-disable no-use-before-define */
+function fieldOrForm(model, value, customInitialFieldState) {
+  // TODO: create toModel()
+  var stringModel = Array.isArray(model) ? model.join('.') : model;
+
+  if (Array.isArray(value) || (0, _isPlainObject2.default)(value)) {
+    return createFormState(stringModel, value, customInitialFieldState);
+  }
+
+  return createFieldState(stringModel, value, customInitialFieldState);
+}
+/* eslint-enable no-use-before-define */
+
+function getMeta(fieldLike, prop) {
+  if (fieldLike && fieldLike.$form) return fieldLike.$form[prop];
+
+  return fieldLike[prop];
+}
+
+function getSubModelString(model, subModel) {
+  if (!model) return subModel;
+
+  return model + '.' + subModel;
+}
+
+function updateFieldState(existingFieldState, updatedFieldState) {
+  var newField = _extends({}, existingFieldState, updatedFieldState);
+
+  return newField;
+}
+
+function createFieldState(model, value, customInitialFieldState) {
+  return _extends({
+    initialValue: value
+  }, _initialFieldState2.default, customInitialFieldState, {
+    model: model,
+    value: value
+  });
+}
+
+function createFormState(model, values, customInitialFieldState) {
+  var options = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : {};
+
+  return _extends({
+    $form: createFieldState(model, values, customInitialFieldState, options)
+  }, options.lazy ? undefined : (0, _mapValues2.default)(values, function (value, key) {
+    var subModel = getSubModelString(model, key);
+
+    return fieldOrForm(subModel, value, customInitialFieldState);
+  }));
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/debounce.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/debounce.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = debounce;
+function debounce(func, delay) {
+  var timeout = void 0;
+  var laterFunc = void 0;
+
+  var createLaterFunc = function createLaterFunc(args) {
+    return function () {
+      timeout = null;
+      func.apply(null, args);
+
+      // Only run the deferred function once
+      laterFunc = undefined;
+    };
+  };
+
+  var debouncedFunc = function debouncedFunc() {
+    for (var _len = arguments.length, args = Array(_len), _key = 0; _key < _len; _key++) {
+      args[_key] = arguments[_key];
+    }
+
+    clearTimeout(timeout);
+    laterFunc = createLaterFunc(args);
+    timeout = setTimeout(laterFunc, delay);
+  };
+
+  debouncedFunc.flush = function () {
+    clearTimeout(timeout);
+    if (laterFunc) laterFunc();
+  };
+
+  debouncedFunc.cancel = function () {
+    clearTimeout(timeout);
+    laterFunc = undefined;
+  };
+
+  return debouncedFunc;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/deep-compare-children.js":
+/*!**************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/deep-compare-children.js ***!
+  \**************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.compareChildren = compareChildren;
+exports.default = deepCompareChildren;
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _shallowCompare = __webpack_require__(/*! shallow-compare */ "./node_modules/shallow-compare/es/index.js");
+
+var _shallowCompare2 = _interopRequireDefault(_shallowCompare);
+
+var _shallowEqual = __webpack_require__(/*! ./shallow-equal */ "./node_modules/react-redux-form/lib/utils/shallow-equal.js");
+
+var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function compareChildren(props, nextProps) {
+  var children = props.children;
+  var nextChildren = nextProps.children;
+
+  // If the number of children changed, then children are different.
+  // If there are no children, use shallowCompare in parent function
+  // to determine if component should update (false && true == false)
+
+  if (_react2.default.Children.count(children) !== _react2.default.Children.count(nextChildren) || !_react2.default.Children.count(children) || !_react2.default.Children.count(nextChildren)) {
+    return true;
+  }
+
+  var childrenArray = _react2.default.Children.toArray(children);
+  var nextChildrenArray = _react2.default.Children.toArray(nextChildren);
+
+  // React.Children.toArray strip's `false` children so lengths
+  // can change
+  if (childrenArray.length !== nextChildrenArray.length) {
+    return false;
+  }
+
+  return [].concat(childrenArray).some(function (child, i) {
+    var nextChild = nextChildrenArray[i];
+
+    if (!child.props || !nextChild.props) {
+      return !(0, _shallowEqual2.default)(child, nextChild);
+    }
+
+    /* eslint-disable no-use-before-define */
+    return deepCompareChildren(child, nextChild.props, nextChild.state);
+  });
+}
+
+function deepCompareChildren(instance, nextProps, nextState) {
+  if (!instance.props.children) return (0, _shallowCompare2.default)(instance, nextProps, nextState);
+
+  return (0, _shallowCompare2.default)(instance, nextProps, nextState) || compareChildren(instance.props, nextProps);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/ends-with.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/ends-with.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = endsWith;
+function endsWith(string, subString) {
+  if (typeof string !== 'string') return false;
+
+  var lastIndex = string.lastIndexOf(subString);
+
+  return lastIndex !== -1 && lastIndex + subString.length === string.length;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/find-key.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/find-key.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = findKey;
+function findKey(object, predicate) {
+  var resultKey = void 0;
+
+  Object.keys(object).some(function (key) {
+    var isKey = predicate(object[key], key, object);
+
+    if (isKey) {
+      resultKey = key;
+      return true;
+    }
+
+    return false;
+  });
+
+  return resultKey;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-field-form.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-field-form.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getFieldForm;
+
+var _get = __webpack_require__(/*! ./get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getFieldForm(state, path) {
+  var formPath = path.slice(0, -1);
+
+  if (!formPath.length) return state;
+
+  var form = (0, _get2.default)(state, formPath);
+
+  (0, _invariant2.default)(form, 'Could not find form for "%s" in the store.', formPath.join('.'));
+
+  return form;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-field-from-state.js":
+/*!*************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-field-from-state.js ***!
+  \*************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getFieldFromState;
+
+var _get = __webpack_require__(/*! ./get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _toPath = __webpack_require__(/*! ./to-path */ "./node_modules/react-redux-form/lib/utils/to-path.js");
+
+var _toPath2 = _interopRequireDefault(_toPath);
+
+var _getForm = __webpack_require__(/*! ./get-form */ "./node_modules/react-redux-form/lib/utils/get-form.js");
+
+var _getForm2 = _interopRequireDefault(_getForm);
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var defaultStrategy = {
+  getForm: _getForm2.default
+};
+
+function getFieldFromState(state, modelString) {
+  var s = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultStrategy;
+
+  var form = state && '$form' in state ? state : s.getForm(state, modelString);
+
+  if (!form || !form.$form) return null;
+
+  if (!modelString.length) return form;
+
+  (0, _invariant2.default)(form, 'Could not find form for "%s" in the store.', modelString);
+
+  var formPath = (0, _toPath2.default)(form.$form.model);
+  var fieldPath = (0, _toPath2.default)(modelString).slice(formPath.length);
+  var field = (0, _get2.default)(form, fieldPath);
+
+  if (!field) return null;
+  if ((0, _isPlainObject2.default)(field) && '$form' in field) return field.$form;
+
+  return field;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-field.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-field.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getField;
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _get = __webpack_require__(/*! ./get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _initialFieldState = __webpack_require__(/*! ../constants/initial-field-state */ "./node_modules/react-redux-form/lib/constants/initial-field-state.js");
+
+var _initialFieldState2 = _interopRequireDefault(_initialFieldState);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getField(state, path) {
+  if (true) {
+    if (!(0, _isPlainObject2.default)(state)) {
+      throw new Error('Could not retrieve field \'' + path + '\' ' + 'from an invalid/empty form state.');
+    }
+  }
+
+  var result = (0, _get2.default)(state, path, _initialFieldState2.default);
+
+  if ('$form' in result) return result.$form;
+
+  return result;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-form-value.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-form-value.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getFormValue;
+
+var _mapValues = __webpack_require__(/*! ./map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _toArray = __webpack_require__(/*! ./to-array */ "./node_modules/react-redux-form/lib/utils/to-array.js");
+
+var _toArray2 = _interopRequireDefault(_toArray);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getFormValue(form) {
+  if (form && !form.$form) {
+    return typeof form.loadedValue !== 'undefined' ? form.loadedValue : form.initialValue;
+  }
+
+  var result = (0, _mapValues2.default)(form, function (field, key) {
+    if (key === '$form') return undefined;
+
+    return getFormValue(field);
+  });
+
+  delete result.$form;
+
+  var isArray = form && form.$form && Array.isArray(form.$form.value);
+
+  return isArray ? (0, _toArray2.default)(result) : result;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-form.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-form.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.clearGetFormCacheForModel = exports.clearGetFormCache = undefined;
+exports.getFormStateKey = getFormStateKey;
+
+var _get = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _isPlainObject = __webpack_require__(/*! ../utils/is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _pathStartsWith = __webpack_require__(/*! ../utils/path-starts-with */ "./node_modules/react-redux-form/lib/utils/path-starts-with.js");
+
+var _pathStartsWith2 = _interopRequireDefault(_pathStartsWith);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var defaultStrategy = {
+  get: _get2.default,
+  keys: function keys(state) {
+    return Object.keys(state);
+  },
+  isObject: function isObject(state) {
+    return (0, _isPlainObject2.default)(state);
+  }
+};
+
+function joinPaths() {
+  for (var _len = arguments.length, paths = Array(_len), _key = 0; _key < _len; _key++) {
+    paths[_key] = arguments[_key];
+  }
+
+  return paths.filter(function (path) {
+    return !!path && path.length;
+  }).join('.');
+}
+
+function getFormStateKey(state, model) {
+  var s = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultStrategy;
+  var currentPath = arguments.length > 3 && arguments[3] !== undefined ? arguments[3] : '';
+
+  var deepCandidateKeys = [];
+  var result = null;
+
+  s.keys(state).some(function (key) {
+    if (key === '') {
+      console.warn('react-redux-form skipped over an empty property key: %s', currentPath);
+      return false;
+    }
+    var subState = s.get(state, key);
+
+    if (subState && s.get(subState, '$form')) {
+      var subStateModel = s.get(subState, '$form.model');
+
+      if ((0, _pathStartsWith2.default)(model, subStateModel) || subStateModel === '') {
+        var localPath = (0, _pathStartsWith.pathDifference)(model, subStateModel);
+
+        var resultPath = [currentPath, key];
+        var currentState = subState;
+
+        localPath.every(function (segment) {
+          if (s.get(currentState, segment) && s.get(currentState, segment + '.$form')) {
+            currentState = s.get(currentState, segment);
+            resultPath.push(segment);
+
+            return true;
+          }
+
+          return false;
+        });
+
+        result = joinPaths.apply(undefined, resultPath);
+
+        return true;
+      }
+
+      return false;
+    }
+
+    if (s.isObject(subState)) {
+      deepCandidateKeys.push(key);
+    }
+
+    return false;
+  });
+
+  if (result) return result;
+
+  deepCandidateKeys.some(function (key) {
+    result = getFormStateKey(s.get(state, key), model, s, joinPaths(currentPath, key));
+
+    return !!result;
+  });
+
+  if (result) return result;
+
+  return null;
+}
+
+var formStateKeyCache = {};
+
+var clearGetFormCache = exports.clearGetFormCache = function clearGetFormCache() {
+  return formStateKeyCache = {};
+}; // eslint-disable-line no-return-assign
+
+var clearGetFormCacheForModel =
+// eslint-disable-next-line
+exports.clearGetFormCacheForModel = function clearGetFormCacheForModel(modelString) {
+  return delete formStateKeyCache[modelString];
+};
+
+var getFormStateKeyCached = function () {
+  return function (state, modelString) {
+    var s = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultStrategy;
+
+    if (formStateKeyCache[modelString]) return formStateKeyCache[modelString];
+
+    var result = getFormStateKey(state, modelString, s);
+
+    formStateKeyCache[modelString] = result; // eslint-disable-line no-return-assign
+
+    return result;
+  };
+}();
+
+function getForm(state, modelString) {
+  var s = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : defaultStrategy;
+
+  var formStateKey = getFormStateKeyCached(state, modelString, s);
+
+  if (!formStateKey) {
+    return null;
+  }
+
+  var form = s.get(state, formStateKey);
+
+  return form;
+}
+
+exports.default = getForm;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-model.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-model.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getModel;
+function getModel(model, state) {
+  return typeof model === 'function' && state ? model(state) : model;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-validity.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-validity.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getValidity;
+
+var _getValue = __webpack_require__(/*! ./get-value */ "./node_modules/react-redux-form/lib/utils/get-value.js");
+
+var _getValue2 = _interopRequireDefault(_getValue);
+
+var _mapValues = __webpack_require__(/*! ./map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function getValidity(validators, value) {
+  var modelValue = (0, _getValue2.default)(value);
+
+  if (typeof validators === 'function') {
+    return validators(modelValue);
+  }
+
+  return (0, _mapValues2.default)(validators, function (validator) {
+    return getValidity(validator, modelValue);
+  });
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get-value.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get-value.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = getValue;
+exports.getCheckboxValue = getCheckboxValue;
+
+var _isMulti = __webpack_require__(/*! ./is-multi */ "./node_modules/react-redux-form/lib/utils/is-multi.js");
+
+var _isMulti2 = _interopRequireDefault(_isMulti);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function isEvent(event) {
+  return !!(event && event.stopPropagation && event.preventDefault);
+}
+
+function getEventValue(event) {
+  var target = event.target;
+
+
+  if (!target) {
+    if (!event.nativeEvent) {
+      return undefined;
+    }
+
+    return event.nativeEvent.text;
+  }
+
+  if (target.type === 'file') {
+    return [].concat(_toConsumableArray(target.files)) || target.dataTransfer && [].concat(_toConsumableArray(target.dataTransfer.files));
+  }
+
+  if (target.multiple) {
+    return [].concat(_toConsumableArray(target.selectedOptions)).map(function (option) {
+      return option.value;
+    });
+  }
+
+  return target.value;
+}
+
+function getValue(value) {
+  return isEvent(value) ? getEventValue(value) : value;
+}
+
+function getCheckboxValue(_, props) {
+  var controlProps = props.controlProps;
+
+
+  if ((0, _isMulti2.default)(props.model)) {
+    return controlProps.value;
+  }
+
+  return !props.modelValue;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/get.js":
+/*!********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/get.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = get;
+
+var _lodash = __webpack_require__(/*! lodash.get */ "./node_modules/lodash.get/index.js");
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _endsWith = __webpack_require__(/*! ./ends-with */ "./node_modules/react-redux-form/lib/utils/ends-with.js");
+
+var _endsWith2 = _interopRequireDefault(_endsWith);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function get(object, path, defaultValue) {
+  var modelString = path;
+
+  if (typeof path === 'number') {
+    var result = object[path];
+
+    return result === undefined ? defaultValue : result;
+  }
+
+  if (!path.length) return object;
+
+  if ((0, _endsWith2.default)(modelString, '.')) {
+    modelString = modelString.slice(0, -1);
+  } else if ((0, _endsWith2.default)(modelString, '[]')) {
+    modelString = modelString.slice(0, -2);
+  }
+
+  return (0, _lodash2.default)(object, modelString, defaultValue);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/identity.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/identity.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = identity;
+function identity(a) {
+  return a;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/inverse.js":
+/*!************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/inverse.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = inverse;
+function inverse(value) {
+  return !value;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/invert-validators.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/invert-validators.js ***!
+  \**********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = invertValidators;
+
+var _mapValues = __webpack_require__(/*! ./map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _invertValidity = __webpack_require__(/*! ./invert-validity */ "./node_modules/react-redux-form/lib/utils/invert-validity.js");
+
+var _invertValidity2 = _interopRequireDefault(_invertValidity);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function invertValidators(validators) {
+  if (typeof validators === 'function') {
+    return function (val) {
+      return (0, _invertValidity2.default)(validators(val));
+    };
+  }
+
+  return (0, _mapValues2.default)(validators, invertValidators);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/invert-validity.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/invert-validity.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = invertValidity;
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+var _mapValues = __webpack_require__(/*! ./map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function invertValidity(validity) {
+  if ((0, _isPlainObject2.default)(validity)) {
+    return (0, _mapValues2.default)(validity, invertValidity);
+  }
+
+  return !validity;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/is-multi.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/is-multi.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isMulti;
+
+var _endsWith = __webpack_require__(/*! ./ends-with */ "./node_modules/react-redux-form/lib/utils/ends-with.js");
+
+var _endsWith2 = _interopRequireDefault(_endsWith);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function isMulti(model) {
+  return (0, _endsWith2.default)(model, '[]');
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/is-native.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/is-native.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+var isReactNative = typeof window !== 'undefined' && window.navigator && window.navigator.product && window.navigator.product === 'ReactNative';
+
+exports.default = isReactNative;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/is-plain-object.js":
+/*!********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/is-plain-object.js ***!
+  \********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+exports.isObjectLike = isObjectLike;
+exports.default = isPlainObject;
+// Adapted from https://github.com/jonschlinkert/is-plain-object
+function isObjectLike(val) {
+  return val != null && (typeof val === 'undefined' ? 'undefined' : _typeof(val)) === 'object';
+}
+
+function isObject(val) {
+  return isObjectLike(val) && Array.isArray(val) === false;
+}
+
+function isObjectObject(o) {
+  return isObject(o) === true && Object.prototype.toString.call(o) === '[object Object]';
+}
+
+function isPlainObject(o) {
+  if (isObjectObject(o) === false) return false;
+
+  // If has modified constructor
+  var ctor = o.constructor;
+  if (typeof ctor !== 'function') return false;
+
+  // If has modified prototype
+  var prot = ctor.prototype;
+  if (isObjectObject(prot) === false) return false;
+
+  // If constructor does not have an Object-specific method
+  if (prot.hasOwnProperty('isPrototypeOf') === false) {
+    return false;
+  }
+
+  // Most likely a plain Object
+  return true;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/is-validity-invalid.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/is-validity-invalid.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isValidityInvalid;
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function isValidityInvalid(errors) {
+  if (Array.isArray(errors)) {
+    return errors.some(isValidityInvalid);
+  }
+
+  if ((0, _isPlainObject2.default)(errors)) {
+    return Object.keys(errors).some(function (key) {
+      return isValidityInvalid(errors[key]);
+    });
+  }
+
+  return !!errors;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/is-validity-valid.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/is-validity-valid.js ***!
+  \**********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = isValidityValid;
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _isPlainObject2 = _interopRequireDefault(_isPlainObject);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function isValidityValid(validity) {
+  if ((0, _isPlainObject2.default)(validity)) {
+    return Object.keys(validity).every(function (key) {
+      return isValidityValid(validity[key]);
+    });
+  }
+
+  return !!validity;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/iteratee.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/iteratee.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+exports.createIteratee = createIteratee;
+exports.iterateeValue = iterateeValue;
+
+var _identity = __webpack_require__(/*! ./identity */ "./node_modules/react-redux-form/lib/utils/identity.js");
+
+var _identity2 = _interopRequireDefault(_identity);
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+var defaultStrategy = {
+  get: _get3.default
+};
+
+function createIteratee() {
+  var s = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategy;
+
+  function matcher(object) {
+    return function (compareObject) {
+      if (compareObject === object) return true;
+
+      return Object.keys(object).every(function (key) {
+        return s.get(object, key) === s.get(compareObject, key);
+      });
+    };
+  }
+
+  function propChecker(prop) {
+    return function (object) {
+      return object && !!s.get(object, prop);
+    };
+  }
+
+  return function (value) {
+    if (typeof value === 'function') {
+      return value;
+    }
+
+    if (value === null) {
+      return _identity2.default;
+    }
+
+    if ((typeof value === 'undefined' ? 'undefined' : _typeof(value)) === 'object') {
+      return matcher(value);
+    }
+
+    return propChecker(value);
+  };
+}
+
+var iteratee = createIteratee();
+
+function iterateeValue(data, value) {
+  if (typeof value === 'function') {
+    return value(data);
+  }
+
+  if (!Array.isArray(value) && (typeof value === 'undefined' ? 'undefined' : _typeof(value)) !== 'object' && typeof value !== 'string') {
+    return !!value;
+  }
+
+  return iteratee(value)(data);
+}
+
+exports.default = iteratee;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/map-values.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/map-values.js ***!
+  \***************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+function mapValues(object, iteratee) {
+  var result = {};
+
+  Object.keys(object || {}).forEach(function (key) {
+    result[key] = iteratee(object[key], key, object);
+  });
+
+  return result;
+}
+
+exports.default = mapValues;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/map.js":
+/*!********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/map.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = map;
+function map(values, iteratee) {
+  if (Array.isArray(values)) {
+    return values.map(iteratee);
+  }
+
+  var result = Object.keys(values).map(function (key) {
+    return iteratee(values[key], key, values);
+  });
+
+  return result;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/merge-validity.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/merge-validity.js ***!
+  \*******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = mergeValidity;
+
+var _isPlainObject = __webpack_require__(/*! ./is-plain-object */ "./node_modules/react-redux-form/lib/utils/is-plain-object.js");
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+function mergeValidity(fieldValidity, actionValidity) {
+  if (!(0, _isPlainObject.isObjectLike)(fieldValidity) || !(0, _isPlainObject.isObjectLike)(actionValidity)) {
+    // can't merge string/boolean validity with keyed validity
+    return actionValidity;
+  }
+
+  return (0, _icepick.merge)(fieldValidity, actionValidity);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/merge.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/merge.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = mergeDeep;
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function mergeDeep(target, source) {
+  return _icepick2.default.merge(target, source);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/omit.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/omit.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+exports.default = omit;
+function omit(object, props) {
+  if (object == null) {
+    return {};
+  }
+  var newObject = _extends({}, object);
+
+  if (typeof props === 'string') {
+    delete newObject[props];
+  } else {
+    props.forEach(function (prop) {
+      delete newObject[prop];
+    });
+  }
+
+  return newObject;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/partition.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/partition.js ***!
+  \**************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = partition;
+function partition(collection, predicate) {
+  var result = [[], []];
+
+  collection.forEach(function (item, index) {
+    if (predicate(item, index, collection)) {
+      result[0].push(item);
+    } else {
+      result[1].push(item);
+    }
+  });
+
+  return result;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/path-starts-with.js":
+/*!*********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/path-starts-with.js ***!
+  \*********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = pathStartsWith;
+exports.pathDifference = pathDifference;
+
+var _lodash = __webpack_require__(/*! lodash.topath */ "./node_modules/lodash.topath/index.js");
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function pathStartsWith(pathString, subPathString) {
+  if (pathString === subPathString) return true;
+
+  var path = (0, _lodash2.default)(pathString);
+  var subPath = (0, _lodash2.default)(subPathString);
+
+  var startsWithSubPath = subPath.every(function (segment, index) {
+    return path[index] === segment;
+  });
+
+  return startsWithSubPath;
+}
+
+function pathDifference(pathString, subPathString) {
+  if (pathString === subPathString) return [];
+
+  var path = (0, _lodash2.default)(pathString);
+  var subPath = (0, _lodash2.default)(subPathString);
+
+  var difference = path.reduce(function (acc, segment, index) {
+    if (segment === subPath[index]) return acc;
+
+    acc.push(segment);
+
+    return acc;
+  }, []);
+
+  return difference;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/persist-event-with-callback.js":
+/*!********************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/persist-event-with-callback.js ***!
+  \********************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = persistEventWithCallback;
+function persistEventWithCallback(callback) {
+  return function (event) {
+    for (var _len = arguments.length, args = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      args[_key - 1] = arguments[_key];
+    }
+
+    if (event && event.persist) {
+      event.persist();
+    }
+
+    callback.apply(undefined, [event].concat(args));
+    return event;
+  };
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/pick.js":
+/*!*********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/pick.js ***!
+  \*********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = pick;
+function pick(object, props) {
+  var result = {};
+
+  for (var i = 0; i < props.length; i++) {
+    var prop = props[i];
+    result[prop] = object[prop];
+  }
+
+  return result;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/resolve-model.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/resolve-model.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
+
+exports.default = wrapWithModelResolver;
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _react2 = _interopRequireDefault(_react);
+
+var _propTypes = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+
+var _propTypes2 = _interopRequireDefault(_propTypes);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+
+function resolveModel(model, parentModel) {
+  if (parentModel) {
+    if (model[0] === '.' || model[0] === '[') {
+      return '' + parentModel + model;
+    }
+
+    if (typeof model === 'function') {
+      return function (state) {
+        return model(state, parentModel);
+      };
+    }
+  }
+
+  return model;
+}
+
+function wrapWithModelResolver(WrappedComponent) {
+  var ResolvedModelWrapper = function (_PureComponent) {
+    _inherits(ResolvedModelWrapper, _PureComponent);
+
+    function ResolvedModelWrapper() {
+      _classCallCheck(this, ResolvedModelWrapper);
+
+      return _possibleConstructorReturn(this, (ResolvedModelWrapper.__proto__ || Object.getPrototypeOf(ResolvedModelWrapper)).apply(this, arguments));
+    }
+
+    _createClass(ResolvedModelWrapper, [{
+      key: 'render',
+      value: function render() {
+        var _context = this.context,
+            parentModel = _context.model,
+            localStore = _context.localStore;
+
+        var resolvedModel = resolveModel(this.props.model, parentModel);
+
+        return _react2.default.createElement(WrappedComponent, _extends({}, this.props, {
+          model: resolvedModel,
+          store: localStore || undefined
+        }));
+      }
+    }]);
+
+    return ResolvedModelWrapper;
+  }(_react.PureComponent);
+
+  ResolvedModelWrapper.displayName = 'Modeled(' + WrappedComponent.displayName + ')';
+
+   true ? ResolvedModelWrapper.propTypes = {
+    model: _propTypes2.default.any
+  } : undefined;
+
+  ResolvedModelWrapper.contextTypes = {
+    model: _propTypes2.default.any,
+    localStore: _propTypes2.default.shape({
+      subscribe: _propTypes2.default.func,
+      dispatch: _propTypes2.default.func,
+      getState: _propTypes2.default.func
+    })
+  };
+
+  return ResolvedModelWrapper;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/shallow-compare-without-children.js":
+/*!*************************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/shallow-compare-without-children.js ***!
+  \*************************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = shallowCompareWithoutChildren;
+
+var _react = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+
+var _shallowEqual = __webpack_require__(/*! ./shallow-equal */ "./node_modules/react-redux-form/lib/utils/shallow-equal.js");
+
+var _shallowEqual2 = _interopRequireDefault(_shallowEqual);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function shallowCompareWithoutChildren(instance, nextProps) {
+  return !(0, _shallowEqual2.default)(instance.props, nextProps, { omitKeys: ['children'] }) || _react.Children.count(instance.props.children) !== _react.Children.count(nextProps.children);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/shallow-equal.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/shallow-equal.js ***!
+  \******************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _typeof2 = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; };
+
+/* eslint-disable */
+
+var _typeof = typeof Symbol === "function" && _typeof2(Symbol.iterator) === "symbol" ? function (obj) {
+  return typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+} : function (obj) {
+  return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj === "undefined" ? "undefined" : _typeof2(obj);
+};
+
+var hasOwnProperty = Object.prototype.hasOwnProperty;
+
+/**
+ * inlined Object.is polyfill to avoid requiring consumers ship their own
+ * https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/is
+ */
+function is(x, y) {
+  // SameValue algorithm
+  if (x === y) {
+    // Steps 1-5, 7-10
+    // Steps 6.b-6.e: +0 != -0
+    return x !== 0 || 1 / x === 1 / y;
+  } else {
+    // Step 6.a: NaN == NaN
+    return x !== x && y !== y;
+  }
+}
+
+/**
+ * Performs equality by iterating through keys on an object and returning false
+ * when any key has values which are not strictly equal between the arguments.
+ * Returns true when the values of all keys are strictly equal.
+ */
+function shallowEqual(objA, objB) {
+  var options = arguments.length > 2 && arguments[2] !== undefined ? arguments[2] : {};
+
+  if (is(objA, objB)) {
+    return true;
+  }
+
+  if ((typeof objA === 'undefined' ? 'undefined' : _typeof(objA)) !== 'object' || objA === null || (typeof objB === 'undefined' ? 'undefined' : _typeof(objB)) !== 'object' || objB === null) {
+    return false;
+  }
+
+  if (objA instanceof Date && objB instanceof Date) {
+    return objA === objB;
+  }
+
+  var keysA = Object.keys(objA);
+  var keysB = Object.keys(objB);
+
+  if (keysA.length !== keysB.length) {
+    return false;
+  }
+
+  var omitKeys = options.omitKeys,
+      deepKeys = options.deepKeys;
+
+  // Test for A's keys different from B.
+
+  for (var i = 0; i < keysA.length; i++) {
+    // if key is an omitted key, skip comparison
+    if (omitKeys && omitKeys.length && ~omitKeys.indexOf(keysA[i])) continue;
+
+    if (deepKeys && deepKeys.length && ~deepKeys.indexOf(keysA[i])) {
+      var result = shallowEqual(objA[keysA[i]], objB[keysA[i]]);
+
+      if (!result) return false;
+    } else if (!hasOwnProperty.call(objB, keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+exports.default = shallowEqual;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/to-array.js":
+/*!*************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/to-array.js ***!
+  \*************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = toArray;
+function toArray(object) {
+  var result = [];
+  Object.keys(object).forEach(function (key) {
+    if (object.hasOwnProperty(key)) {
+      result.push(object[key]);
+    }
+  });
+  return result;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/to-path.js":
+/*!************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/to-path.js ***!
+  \************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = toPath;
+
+var _lodash = __webpack_require__(/*! lodash.topath */ "./node_modules/lodash.topath/index.js");
+
+var _lodash2 = _interopRequireDefault(_lodash);
+
+var _endsWith = __webpack_require__(/*! ./ends-with */ "./node_modules/react-redux-form/lib/utils/ends-with.js");
+
+var _endsWith2 = _interopRequireDefault(_endsWith);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function toPath(value) {
+  var path = value;
+
+  if ((0, _endsWith2.default)(path, '.')) {
+    path = path.slice(0, -1);
+  } else if ((0, _endsWith2.default)(path, '[]')) {
+    path = path.slice(0, -2);
+  }
+
+  return (0, _lodash2.default)(path);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/track.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/track.js ***!
+  \**********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.trackable = exports.createTrack = undefined;
+
+var _findKey2 = __webpack_require__(/*! ../utils/find-key */ "./node_modules/react-redux-form/lib/utils/find-key.js");
+
+var _findKey3 = _interopRequireDefault(_findKey2);
+
+var _get2 = __webpack_require__(/*! ../utils/get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get3 = _interopRequireDefault(_get2);
+
+var _iteratee = __webpack_require__(/*! ../utils/iteratee */ "./node_modules/react-redux-form/lib/utils/iteratee.js");
+
+var _isMulti = __webpack_require__(/*! ../utils/is-multi */ "./node_modules/react-redux-form/lib/utils/is-multi.js");
+
+var _isMulti2 = _interopRequireDefault(_isMulti);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
+
+var defaultStrategy = {
+  findKey: _findKey3.default,
+  get: _get3.default
+};
+
+function createTrack() {
+  var s = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : defaultStrategy;
+
+  var iteratee = (0, _iteratee.createIteratee)(s);
+
+  return function track(model) {
+    for (var _len = arguments.length, predicates = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      predicates[_key - 1] = arguments[_key];
+    }
+
+    var isPartial = model[0] === '.';
+
+    return function (fullState, parentModel) {
+      var childModel = isPartial ? model.slice(1) : model;
+      var state = isPartial ? s.get(fullState, parentModel) : fullState;
+
+      var _childModel$split = childModel.split(/\[\]\.?/),
+          _childModel$split2 = _toArray(_childModel$split),
+          parentModelPath = _childModel$split2[0],
+          childModelPaths = _childModel$split2.slice(1);
+
+      var fullPath = parentModelPath;
+      var subState = s.get(state, fullPath);
+
+      predicates.forEach(function (predicate, i) {
+        var childModelPath = childModelPaths[i];
+        var predicateIteratee = iteratee(predicate);
+
+        var subPath = childModelPath ? s.findKey(subState, predicateIteratee) + '.' + childModelPath : '' + s.findKey(subState, predicateIteratee);
+
+        subState = s.get(subState, subPath);
+        fullPath += '.' + subPath;
+      });
+
+      if ((0, _isMulti2.default)(childModel) && predicates.length < childModelPaths.length) {
+        fullPath += '[]';
+      }
+
+      return isPartial ? parentModel + '.' + fullPath : fullPath;
+    };
+  };
+}
+
+var track = createTrack();
+
+function trackable(actionCreator) {
+  return function (model) {
+    for (var _len2 = arguments.length, args = Array(_len2 > 1 ? _len2 - 1 : 0), _key2 = 1; _key2 < _len2; _key2++) {
+      args[_key2 - 1] = arguments[_key2];
+    }
+
+    if (typeof model === 'function') {
+      return function (dispatch, getState) {
+        var modelPath = model(getState());
+
+        dispatch(actionCreator.apply(undefined, [modelPath].concat(args)));
+      };
+    }
+
+    return actionCreator.apply(undefined, [model].concat(args));
+  };
+}
+
+exports.default = track;
+exports.createTrack = createTrack;
+exports.trackable = trackable;
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/update-field.js":
+/*!*****************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/update-field.js ***!
+  \*****************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
+exports.getFieldAndForm = getFieldAndForm;
+exports.default = updateField;
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+var _get = __webpack_require__(/*! ./get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _mapValues = __webpack_require__(/*! ./map-values */ "./node_modules/react-redux-form/lib/utils/map-values.js");
+
+var _mapValues2 = _interopRequireDefault(_mapValues);
+
+var _formReducer = __webpack_require__(/*! ../reducers/form-reducer */ "./node_modules/react-redux-form/lib/reducers/form-reducer.js");
+
+var _createField = __webpack_require__(/*! ./create-field */ "./node_modules/react-redux-form/lib/utils/create-field.js");
+
+var _assocIn = __webpack_require__(/*! ./assoc-in */ "./node_modules/react-redux-form/lib/utils/assoc-in.js");
+
+var _assocIn2 = _interopRequireDefault(_assocIn);
+
+var _invariant = __webpack_require__(/*! invariant */ "./node_modules/invariant/browser.js");
+
+var _invariant2 = _interopRequireDefault(_invariant);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+function tempInitialState(path) {
+  var initialValue = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : null;
+
+  if (path.length === 1) return _defineProperty({}, path[0], initialValue);
+
+  return _defineProperty({}, path[0], tempInitialState(path.slice(1), initialValue));
+}
+
+function getFieldAndForm(formState, modelPath) {
+  var field = (0, _get2.default)(formState, modelPath);
+  var form = formState;
+
+  (0, _invariant2.default)(form, 'Could not find form for "%s" in the store.', modelPath);
+
+  if (!field) {
+    var initialValue = (0, _get2.default)(formState.$form.initialValue, modelPath);
+
+    form = _icepick2.default.merge((0, _formReducer.createInitialState)(formState.$form.model, tempInitialState(modelPath, initialValue)), formState);
+
+    field = (0, _get2.default)(form, modelPath);
+  }
+
+  return [field, form];
+}
+
+function updateField(state, path, newState, newSubState, updater) {
+  var _getFieldAndForm = getFieldAndForm(state, path),
+      _getFieldAndForm2 = _slicedToArray(_getFieldAndForm, 2),
+      field = _getFieldAndForm2[0],
+      fullState = _getFieldAndForm2[1];
+
+  if (!field) return state;
+
+  var isForm = field.hasOwnProperty('$form');
+  var fieldPath = isForm ? [].concat(_toConsumableArray(path), ['$form']) : path;
+
+  var fieldState = isForm ? field.$form : field;
+
+  var updatedFieldState = typeof newState === 'function' ? newState(fieldState) : newState;
+
+  if (isForm && newSubState) {
+    var formState = (0, _mapValues2.default)(field, function (subState, key) {
+      if (key === '$form') {
+        return (0, _createField.updateFieldState)(fieldState, updatedFieldState);
+      }
+
+      var updatedSubState = typeof newSubState === 'function' ? newSubState(subState, updatedFieldState) : newSubState;
+
+      return (0, _createField.updateFieldState)(subState, updatedSubState);
+    });
+
+    if (!path.length) return formState;
+
+    return (0, _assocIn2.default)(fullState, path, formState, updater);
+  }
+
+  return (0, _assocIn2.default)(fullState, fieldPath, (0, _createField.updateFieldState)(fieldState, updatedFieldState), updater);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/update-parent-forms.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/update-parent-forms.js ***!
+  \************************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = updateParentForms;
+
+var _icepick = __webpack_require__(/*! icepick */ "./node_modules/icepick/icepick.js");
+
+var _icepick2 = _interopRequireDefault(_icepick);
+
+var _get = __webpack_require__(/*! ./get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _assocIn = __webpack_require__(/*! ./assoc-in */ "./node_modules/react-redux-form/lib/utils/assoc-in.js");
+
+var _assocIn2 = _interopRequireDefault(_assocIn);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _toConsumableArray(arr) { if (Array.isArray(arr)) { for (var i = 0, arr2 = Array(arr.length); i < arr.length; i++) { arr2[i] = arr[i]; } return arr2; } else { return Array.from(arr); } }
+
+// import { updateFieldState } from './create-field';
+
+function updateParentForms(state, localPath, updater) {
+  var parentLocalPath = localPath.slice(0, -1);
+
+  var value = parentLocalPath.length ? (0, _get2.default)(state, parentLocalPath) : state;
+
+  if (!value) return state;
+
+  var form = value.$form;
+
+  var updatedValue = typeof updater === 'function' ? updater(value) : updater;
+
+  // const updatedForm = updateFieldState(form, updatedValue);
+
+  var newState = (0, _assocIn2.default)(state, [].concat(_toConsumableArray(parentLocalPath), ['$form']), _icepick2.default.merge(form, updatedValue));
+
+  if (!parentLocalPath.length) return newState;
+
+  return updateParentForms(newState, parentLocalPath, updater);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux-form/lib/utils/update-sub-fields.js":
+/*!**********************************************************************!*\
+  !*** ./node_modules/react-redux-form/lib/utils/update-sub-fields.js ***!
+  \**********************************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = updateSubFields;
+
+var _get = __webpack_require__(/*! ./get */ "./node_modules/react-redux-form/lib/utils/get.js");
+
+var _get2 = _interopRequireDefault(_get);
+
+var _assocIn = __webpack_require__(/*! ./assoc-in */ "./node_modules/react-redux-form/lib/utils/assoc-in.js");
+
+var _assocIn2 = _interopRequireDefault(_assocIn);
+
+var _createField = __webpack_require__(/*! ./create-field */ "./node_modules/react-redux-form/lib/utils/create-field.js");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function updateSubField(subField, newSubState) {
+  // Form
+  if (subField && subField.$form) {
+    // intermediate value - not mutated outside function
+    var result = {};
+
+    Object.keys(subField).forEach(function (key) {
+      if (key === '$form') {
+        result.$form = (0, _createField.updateFieldState)(subField.$form, newSubState);
+      } else {
+        result[key] = updateSubField(subField[key], newSubState);
+      }
+    });
+
+    return result;
+  }
+
+  // Field
+  return (0, _createField.updateFieldState)(subField, newSubState);
+}
+
+function updateSubFields(state, localPath, newState) {
+  var field = (0, _get2.default)(state, localPath);
+
+  // only forms can have fields -
+  // skip if field is not a form
+  if (!field || !field.$form) return state;
+
+  // intermediate value - not mutated outside function
+  var updatedField = {};
+
+  Object.keys(field).forEach(function (key) {
+    if (key === '$form') {
+      updatedField.$form = field.$form;
+    } else {
+      updatedField[key] = updateSubField(field[key], newState);
+    }
+  });
+
+  if (!localPath.length) return updatedField;
+
+  return (0, _assocIn2.default)(state, localPath, updatedField);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/components/Context.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/react-redux/es/components/Context.js ***!
+  \***********************************************************/
+/*! exports provided: ReactReduxContext, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ReactReduxContext", function() { return ReactReduxContext; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+
+var ReactReduxContext =
+/*#__PURE__*/
+react__WEBPACK_IMPORTED_MODULE_0___default.a.createContext(null);
+
+if (true) {
+  ReactReduxContext.displayName = 'ReactRedux';
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (ReactReduxContext);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/components/Provider.js":
+/*!************************************************************!*\
+  !*** ./node_modules/react-redux/es/components/Provider.js ***!
+  \************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! prop-types */ "./node_modules/prop-types/index.js");
+/* harmony import */ var prop_types__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(prop_types__WEBPACK_IMPORTED_MODULE_1__);
+/* harmony import */ var _Context__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./Context */ "./node_modules/react-redux/es/components/Context.js");
+/* harmony import */ var _utils_Subscription__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/Subscription */ "./node_modules/react-redux/es/utils/Subscription.js");
+
+
+
+
+
+function Provider(_ref) {
+  var store = _ref.store,
+      context = _ref.context,
+      children = _ref.children;
+  var contextValue = Object(react__WEBPACK_IMPORTED_MODULE_0__["useMemo"])(function () {
+    var subscription = new _utils_Subscription__WEBPACK_IMPORTED_MODULE_3__["default"](store);
+    subscription.onStateChange = subscription.notifyNestedSubs;
+    return {
+      store: store,
+      subscription: subscription
+    };
+  }, [store]);
+  var previousState = Object(react__WEBPACK_IMPORTED_MODULE_0__["useMemo"])(function () {
+    return store.getState();
+  }, [store]);
+  Object(react__WEBPACK_IMPORTED_MODULE_0__["useEffect"])(function () {
+    var subscription = contextValue.subscription;
+    subscription.trySubscribe();
+
+    if (previousState !== store.getState()) {
+      subscription.notifyNestedSubs();
+    }
+
+    return function () {
+      subscription.tryUnsubscribe();
+      subscription.onStateChange = null;
+    };
+  }, [contextValue, previousState]);
+  var Context = context || _Context__WEBPACK_IMPORTED_MODULE_2__["ReactReduxContext"];
+  return react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(Context.Provider, {
+    value: contextValue
+  }, children);
+}
+
+if (true) {
+  Provider.propTypes = {
+    store: prop_types__WEBPACK_IMPORTED_MODULE_1___default.a.shape({
+      subscribe: prop_types__WEBPACK_IMPORTED_MODULE_1___default.a.func.isRequired,
+      dispatch: prop_types__WEBPACK_IMPORTED_MODULE_1___default.a.func.isRequired,
+      getState: prop_types__WEBPACK_IMPORTED_MODULE_1___default.a.func.isRequired
+    }),
+    context: prop_types__WEBPACK_IMPORTED_MODULE_1___default.a.object,
+    children: prop_types__WEBPACK_IMPORTED_MODULE_1___default.a.any
+  };
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (Provider);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/components/connectAdvanced.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux/es/components/connectAdvanced.js ***!
+  \*******************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return connectAdvanced; });
+/* harmony import */ var _babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/esm/extends */ "./node_modules/@babel/runtime/helpers/esm/extends.js");
+/* harmony import */ var _babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/esm/objectWithoutPropertiesLoose */ "./node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js");
+/* harmony import */ var hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! hoist-non-react-statics */ "./node_modules/hoist-non-react-statics/dist/hoist-non-react-statics.cjs.js");
+/* harmony import */ var hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var react_is__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! react-is */ "./node_modules/react-is/index.js");
+/* harmony import */ var react_is__WEBPACK_IMPORTED_MODULE_4___default = /*#__PURE__*/__webpack_require__.n(react_is__WEBPACK_IMPORTED_MODULE_4__);
+/* harmony import */ var _utils_Subscription__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../utils/Subscription */ "./node_modules/react-redux/es/utils/Subscription.js");
+/* harmony import */ var _utils_useIsomorphicLayoutEffect__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../utils/useIsomorphicLayoutEffect */ "./node_modules/react-redux/es/utils/useIsomorphicLayoutEffect.js");
+/* harmony import */ var _Context__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./Context */ "./node_modules/react-redux/es/components/Context.js");
+
+
+
+
+
+
+
+ // Define some constant arrays just to avoid re-creating these
+
+var EMPTY_ARRAY = [];
+var NO_SUBSCRIPTION_ARRAY = [null, null];
+
+var stringifyComponent = function stringifyComponent(Comp) {
+  try {
+    return JSON.stringify(Comp);
+  } catch (err) {
+    return String(Comp);
+  }
+};
+
+function storeStateUpdatesReducer(state, action) {
+  var updateCount = state[1];
+  return [action.payload, updateCount + 1];
+}
+
+function useIsomorphicLayoutEffectWithArgs(effectFunc, effectArgs, dependencies) {
+  Object(_utils_useIsomorphicLayoutEffect__WEBPACK_IMPORTED_MODULE_6__["useIsomorphicLayoutEffect"])(function () {
+    return effectFunc.apply(void 0, effectArgs);
+  }, dependencies);
+}
+
+function captureWrapperProps(lastWrapperProps, lastChildProps, renderIsScheduled, wrapperProps, actualChildProps, childPropsFromStoreUpdate, notifyNestedSubs) {
+  // We want to capture the wrapper props and child props we used for later comparisons
+  lastWrapperProps.current = wrapperProps;
+  lastChildProps.current = actualChildProps;
+  renderIsScheduled.current = false; // If the render was from a store update, clear out that reference and cascade the subscriber update
+
+  if (childPropsFromStoreUpdate.current) {
+    childPropsFromStoreUpdate.current = null;
+    notifyNestedSubs();
+  }
+}
+
+function subscribeUpdates(shouldHandleStateChanges, store, subscription, childPropsSelector, lastWrapperProps, lastChildProps, renderIsScheduled, childPropsFromStoreUpdate, notifyNestedSubs, forceComponentUpdateDispatch) {
+  // If we're not subscribed to the store, nothing to do here
+  if (!shouldHandleStateChanges) return; // Capture values for checking if and when this component unmounts
+
+  var didUnsubscribe = false;
+  var lastThrownError = null; // We'll run this callback every time a store subscription update propagates to this component
+
+  var checkForUpdates = function checkForUpdates() {
+    if (didUnsubscribe) {
+      // Don't run stale listeners.
+      // Redux doesn't guarantee unsubscriptions happen until next dispatch.
+      return;
+    }
+
+    var latestStoreState = store.getState();
+    var newChildProps, error;
+
+    try {
+      // Actually run the selector with the most recent store state and wrapper props
+      // to determine what the child props should be
+      newChildProps = childPropsSelector(latestStoreState, lastWrapperProps.current);
+    } catch (e) {
+      error = e;
+      lastThrownError = e;
+    }
+
+    if (!error) {
+      lastThrownError = null;
+    } // If the child props haven't changed, nothing to do here - cascade the subscription update
+
+
+    if (newChildProps === lastChildProps.current) {
+      if (!renderIsScheduled.current) {
+        notifyNestedSubs();
+      }
+    } else {
+      // Save references to the new child props.  Note that we track the "child props from store update"
+      // as a ref instead of a useState/useReducer because we need a way to determine if that value has
+      // been processed.  If this went into useState/useReducer, we couldn't clear out the value without
+      // forcing another re-render, which we don't want.
+      lastChildProps.current = newChildProps;
+      childPropsFromStoreUpdate.current = newChildProps;
+      renderIsScheduled.current = true; // If the child props _did_ change (or we caught an error), this wrapper component needs to re-render
+
+      forceComponentUpdateDispatch({
+        type: 'STORE_UPDATED',
+        payload: {
+          error: error
+        }
+      });
+    }
+  }; // Actually subscribe to the nearest connected ancestor (or store)
+
+
+  subscription.onStateChange = checkForUpdates;
+  subscription.trySubscribe(); // Pull data from the store after first render in case the store has
+  // changed since we began.
+
+  checkForUpdates();
+
+  var unsubscribeWrapper = function unsubscribeWrapper() {
+    didUnsubscribe = true;
+    subscription.tryUnsubscribe();
+    subscription.onStateChange = null;
+
+    if (lastThrownError) {
+      // It's possible that we caught an error due to a bad mapState function, but the
+      // parent re-rendered without this component and we're about to unmount.
+      // This shouldn't happen as long as we do top-down subscriptions correctly, but
+      // if we ever do those wrong, this throw will surface the error in our tests.
+      // In that case, throw the error from here so it doesn't get lost.
+      throw lastThrownError;
+    }
+  };
+
+  return unsubscribeWrapper;
+}
+
+var initStateUpdates = function initStateUpdates() {
+  return [null, 0];
+};
+
+function connectAdvanced(
+/*
+  selectorFactory is a func that is responsible for returning the selector function used to
+  compute new props from state, props, and dispatch. For example:
+      export default connectAdvanced((dispatch, options) => (state, props) => ({
+      thing: state.things[props.thingId],
+      saveThing: fields => dispatch(actionCreators.saveThing(props.thingId, fields)),
+    }))(YourComponent)
+    Access to dispatch is provided to the factory so selectorFactories can bind actionCreators
+  outside of their selector as an optimization. Options passed to connectAdvanced are passed to
+  the selectorFactory, along with displayName and WrappedComponent, as the second argument.
+    Note that selectorFactory is responsible for all caching/memoization of inbound and outbound
+  props. Do not use connectAdvanced directly without memoizing results between calls to your
+  selector, otherwise the Connect component will re-render on every state or props change.
+*/
+selectorFactory, // options object:
+_ref) {
+  if (_ref === void 0) {
+    _ref = {};
+  }
+
+  var _ref2 = _ref,
+      _ref2$getDisplayName = _ref2.getDisplayName,
+      getDisplayName = _ref2$getDisplayName === void 0 ? function (name) {
+    return "ConnectAdvanced(" + name + ")";
+  } : _ref2$getDisplayName,
+      _ref2$methodName = _ref2.methodName,
+      methodName = _ref2$methodName === void 0 ? 'connectAdvanced' : _ref2$methodName,
+      _ref2$renderCountProp = _ref2.renderCountProp,
+      renderCountProp = _ref2$renderCountProp === void 0 ? undefined : _ref2$renderCountProp,
+      _ref2$shouldHandleSta = _ref2.shouldHandleStateChanges,
+      shouldHandleStateChanges = _ref2$shouldHandleSta === void 0 ? true : _ref2$shouldHandleSta,
+      _ref2$storeKey = _ref2.storeKey,
+      storeKey = _ref2$storeKey === void 0 ? 'store' : _ref2$storeKey,
+      _ref2$withRef = _ref2.withRef,
+      withRef = _ref2$withRef === void 0 ? false : _ref2$withRef,
+      _ref2$forwardRef = _ref2.forwardRef,
+      forwardRef = _ref2$forwardRef === void 0 ? false : _ref2$forwardRef,
+      _ref2$context = _ref2.context,
+      context = _ref2$context === void 0 ? _Context__WEBPACK_IMPORTED_MODULE_7__["ReactReduxContext"] : _ref2$context,
+      connectOptions = Object(_babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_1__["default"])(_ref2, ["getDisplayName", "methodName", "renderCountProp", "shouldHandleStateChanges", "storeKey", "withRef", "forwardRef", "context"]);
+
+  if (true) {
+    if (renderCountProp !== undefined) {
+      throw new Error("renderCountProp is removed. render counting is built into the latest React Dev Tools profiling extension");
+    }
+
+    if (withRef) {
+      throw new Error('withRef is removed. To access the wrapped instance, use a ref on the connected component');
+    }
+
+    var customStoreWarningMessage = 'To use a custom Redux store for specific components, create a custom React context with ' + "React.createContext(), and pass the context object to React Redux's Provider and specific components" + ' like: <Provider context={MyContext}><ConnectedComponent context={MyContext} /></Provider>. ' + 'You may also pass a {context : MyContext} option to connect';
+
+    if (storeKey !== 'store') {
+      throw new Error('storeKey has been removed and does not do anything. ' + customStoreWarningMessage);
+    }
+  }
+
+  var Context = context;
+  return function wrapWithConnect(WrappedComponent) {
+    if ( true && !Object(react_is__WEBPACK_IMPORTED_MODULE_4__["isValidElementType"])(WrappedComponent)) {
+      throw new Error("You must pass a component to the function returned by " + (methodName + ". Instead received " + stringifyComponent(WrappedComponent)));
+    }
+
+    var wrappedComponentName = WrappedComponent.displayName || WrappedComponent.name || 'Component';
+    var displayName = getDisplayName(wrappedComponentName);
+
+    var selectorFactoryOptions = Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, connectOptions, {
+      getDisplayName: getDisplayName,
+      methodName: methodName,
+      renderCountProp: renderCountProp,
+      shouldHandleStateChanges: shouldHandleStateChanges,
+      storeKey: storeKey,
+      displayName: displayName,
+      wrappedComponentName: wrappedComponentName,
+      WrappedComponent: WrappedComponent
+    });
+
+    var pure = connectOptions.pure;
+
+    function createChildSelector(store) {
+      return selectorFactory(store.dispatch, selectorFactoryOptions);
+    } // If we aren't running in "pure" mode, we don't want to memoize values.
+    // To avoid conditionally calling hooks, we fall back to a tiny wrapper
+    // that just executes the given callback immediately.
+
+
+    var usePureOnlyMemo = pure ? react__WEBPACK_IMPORTED_MODULE_3__["useMemo"] : function (callback) {
+      return callback();
+    };
+
+    function ConnectFunction(props) {
+      var _useMemo = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        // Distinguish between actual "data" props that were passed to the wrapper component,
+        // and values needed to control behavior (forwarded refs, alternate context instances).
+        // To maintain the wrapperProps object reference, memoize this destructuring.
+        var reactReduxForwardedRef = props.reactReduxForwardedRef,
+            wrapperProps = Object(_babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_1__["default"])(props, ["reactReduxForwardedRef"]);
+
+        return [props.context, reactReduxForwardedRef, wrapperProps];
+      }, [props]),
+          propsContext = _useMemo[0],
+          reactReduxForwardedRef = _useMemo[1],
+          wrapperProps = _useMemo[2];
+
+      var ContextToUse = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        // Users may optionally pass in a custom context instance to use instead of our ReactReduxContext.
+        // Memoize the check that determines which context instance we should use.
+        return propsContext && propsContext.Consumer && Object(react_is__WEBPACK_IMPORTED_MODULE_4__["isContextConsumer"])(react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(propsContext.Consumer, null)) ? propsContext : Context;
+      }, [propsContext, Context]); // Retrieve the store and ancestor subscription via context, if available
+
+      var contextValue = Object(react__WEBPACK_IMPORTED_MODULE_3__["useContext"])(ContextToUse); // The store _must_ exist as either a prop or in context.
+      // We'll check to see if it _looks_ like a Redux store first.
+      // This allows us to pass through a `store` prop that is just a plain value.
+
+      var didStoreComeFromProps = Boolean(props.store) && Boolean(props.store.getState) && Boolean(props.store.dispatch);
+      var didStoreComeFromContext = Boolean(contextValue) && Boolean(contextValue.store);
+
+      if ( true && !didStoreComeFromProps && !didStoreComeFromContext) {
+        throw new Error("Could not find \"store\" in the context of " + ("\"" + displayName + "\". Either wrap the root component in a <Provider>, ") + "or pass a custom React context provider to <Provider> and the corresponding " + ("React context consumer to " + displayName + " in connect options."));
+      } // Based on the previous check, one of these must be true
+
+
+      var store = didStoreComeFromProps ? props.store : contextValue.store;
+      var childPropsSelector = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        // The child props selector needs the store reference as an input.
+        // Re-create this selector whenever the store changes.
+        return createChildSelector(store);
+      }, [store]);
+
+      var _useMemo2 = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        if (!shouldHandleStateChanges) return NO_SUBSCRIPTION_ARRAY; // This Subscription's source should match where store came from: props vs. context. A component
+        // connected to the store via props shouldn't use subscription from context, or vice versa.
+
+        var subscription = new _utils_Subscription__WEBPACK_IMPORTED_MODULE_5__["default"](store, didStoreComeFromProps ? null : contextValue.subscription); // `notifyNestedSubs` is duplicated to handle the case where the component is unmounted in
+        // the middle of the notification loop, where `subscription` will then be null. This can
+        // probably be avoided if Subscription's listeners logic is changed to not call listeners
+        // that have been unsubscribed in the  middle of the notification loop.
+
+        var notifyNestedSubs = subscription.notifyNestedSubs.bind(subscription);
+        return [subscription, notifyNestedSubs];
+      }, [store, didStoreComeFromProps, contextValue]),
+          subscription = _useMemo2[0],
+          notifyNestedSubs = _useMemo2[1]; // Determine what {store, subscription} value should be put into nested context, if necessary,
+      // and memoize that value to avoid unnecessary context updates.
+
+
+      var overriddenContextValue = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        if (didStoreComeFromProps) {
+          // This component is directly subscribed to a store from props.
+          // We don't want descendants reading from this store - pass down whatever
+          // the existing context value is from the nearest connected ancestor.
+          return contextValue;
+        } // Otherwise, put this component's subscription instance into context, so that
+        // connected descendants won't update until after this component is done
+
+
+        return Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, contextValue, {
+          subscription: subscription
+        });
+      }, [didStoreComeFromProps, contextValue, subscription]); // We need to force this wrapper component to re-render whenever a Redux store update
+      // causes a change to the calculated child component props (or we caught an error in mapState)
+
+      var _useReducer = Object(react__WEBPACK_IMPORTED_MODULE_3__["useReducer"])(storeStateUpdatesReducer, EMPTY_ARRAY, initStateUpdates),
+          _useReducer$ = _useReducer[0],
+          previousStateUpdateResult = _useReducer$[0],
+          forceComponentUpdateDispatch = _useReducer[1]; // Propagate any mapState/mapDispatch errors upwards
+
+
+      if (previousStateUpdateResult && previousStateUpdateResult.error) {
+        throw previousStateUpdateResult.error;
+      } // Set up refs to coordinate values between the subscription effect and the render logic
+
+
+      var lastChildProps = Object(react__WEBPACK_IMPORTED_MODULE_3__["useRef"])();
+      var lastWrapperProps = Object(react__WEBPACK_IMPORTED_MODULE_3__["useRef"])(wrapperProps);
+      var childPropsFromStoreUpdate = Object(react__WEBPACK_IMPORTED_MODULE_3__["useRef"])();
+      var renderIsScheduled = Object(react__WEBPACK_IMPORTED_MODULE_3__["useRef"])(false);
+      var actualChildProps = usePureOnlyMemo(function () {
+        // Tricky logic here:
+        // - This render may have been triggered by a Redux store update that produced new child props
+        // - However, we may have gotten new wrapper props after that
+        // If we have new child props, and the same wrapper props, we know we should use the new child props as-is.
+        // But, if we have new wrapper props, those might change the child props, so we have to recalculate things.
+        // So, we'll use the child props from store update only if the wrapper props are the same as last time.
+        if (childPropsFromStoreUpdate.current && wrapperProps === lastWrapperProps.current) {
+          return childPropsFromStoreUpdate.current;
+        } // TODO We're reading the store directly in render() here. Bad idea?
+        // This will likely cause Bad Things (TM) to happen in Concurrent Mode.
+        // Note that we do this because on renders _not_ caused by store updates, we need the latest store state
+        // to determine what the child props should be.
+
+
+        return childPropsSelector(store.getState(), wrapperProps);
+      }, [store, previousStateUpdateResult, wrapperProps]); // We need this to execute synchronously every time we re-render. However, React warns
+      // about useLayoutEffect in SSR, so we try to detect environment and fall back to
+      // just useEffect instead to avoid the warning, since neither will run anyway.
+
+      useIsomorphicLayoutEffectWithArgs(captureWrapperProps, [lastWrapperProps, lastChildProps, renderIsScheduled, wrapperProps, actualChildProps, childPropsFromStoreUpdate, notifyNestedSubs]); // Our re-subscribe logic only runs when the store/subscription setup changes
+
+      useIsomorphicLayoutEffectWithArgs(subscribeUpdates, [shouldHandleStateChanges, store, subscription, childPropsSelector, lastWrapperProps, lastChildProps, renderIsScheduled, childPropsFromStoreUpdate, notifyNestedSubs, forceComponentUpdateDispatch], [store, subscription, childPropsSelector]); // Now that all that's done, we can finally try to actually render the child component.
+      // We memoize the elements for the rendered child component as an optimization.
+
+      var renderedWrappedComponent = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        return react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(WrappedComponent, Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, actualChildProps, {
+          ref: reactReduxForwardedRef
+        }));
+      }, [reactReduxForwardedRef, WrappedComponent, actualChildProps]); // If React sees the exact same element reference as last time, it bails out of re-rendering
+      // that child, same as if it was wrapped in React.memo() or returned false from shouldComponentUpdate.
+
+      var renderedChild = Object(react__WEBPACK_IMPORTED_MODULE_3__["useMemo"])(function () {
+        if (shouldHandleStateChanges) {
+          // If this component is subscribed to store updates, we need to pass its own
+          // subscription instance down to our descendants. That means rendering the same
+          // Context instance, and putting a different value into the context.
+          return react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(ContextToUse.Provider, {
+            value: overriddenContextValue
+          }, renderedWrappedComponent);
+        }
+
+        return renderedWrappedComponent;
+      }, [ContextToUse, renderedWrappedComponent, overriddenContextValue]);
+      return renderedChild;
+    } // If we're in "pure" mode, ensure our wrapper component only re-renders when incoming props have changed.
+
+
+    var Connect = pure ? react__WEBPACK_IMPORTED_MODULE_3___default.a.memo(ConnectFunction) : ConnectFunction;
+    Connect.WrappedComponent = WrappedComponent;
+    Connect.displayName = displayName;
+
+    if (forwardRef) {
+      var forwarded = react__WEBPACK_IMPORTED_MODULE_3___default.a.forwardRef(function forwardConnectRef(props, ref) {
+        return react__WEBPACK_IMPORTED_MODULE_3___default.a.createElement(Connect, Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, props, {
+          reactReduxForwardedRef: ref
+        }));
+      });
+      forwarded.displayName = displayName;
+      forwarded.WrappedComponent = WrappedComponent;
+      return hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_2___default()(forwarded, WrappedComponent);
+    }
+
+    return hoist_non_react_statics__WEBPACK_IMPORTED_MODULE_2___default()(Connect, WrappedComponent);
+  };
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/connect.js":
+/*!********************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/connect.js ***!
+  \********************************************************/
+/*! exports provided: createConnect, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createConnect", function() { return createConnect; });
+/* harmony import */ var _babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/esm/extends */ "./node_modules/@babel/runtime/helpers/esm/extends.js");
+/* harmony import */ var _babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @babel/runtime/helpers/esm/objectWithoutPropertiesLoose */ "./node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js");
+/* harmony import */ var _components_connectAdvanced__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../components/connectAdvanced */ "./node_modules/react-redux/es/components/connectAdvanced.js");
+/* harmony import */ var _utils_shallowEqual__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/shallowEqual */ "./node_modules/react-redux/es/utils/shallowEqual.js");
+/* harmony import */ var _mapDispatchToProps__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./mapDispatchToProps */ "./node_modules/react-redux/es/connect/mapDispatchToProps.js");
+/* harmony import */ var _mapStateToProps__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./mapStateToProps */ "./node_modules/react-redux/es/connect/mapStateToProps.js");
+/* harmony import */ var _mergeProps__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./mergeProps */ "./node_modules/react-redux/es/connect/mergeProps.js");
+/* harmony import */ var _selectorFactory__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./selectorFactory */ "./node_modules/react-redux/es/connect/selectorFactory.js");
+
+
+
+
+
+
+
+
+/*
+  connect is a facade over connectAdvanced. It turns its args into a compatible
+  selectorFactory, which has the signature:
+
+    (dispatch, options) => (nextState, nextOwnProps) => nextFinalProps
+  
+  connect passes its args to connectAdvanced as options, which will in turn pass them to
+  selectorFactory each time a Connect component instance is instantiated or hot reloaded.
+
+  selectorFactory returns a final props selector from its mapStateToProps,
+  mapStateToPropsFactories, mapDispatchToProps, mapDispatchToPropsFactories, mergeProps,
+  mergePropsFactories, and pure args.
+
+  The resulting final props selector is called by the Connect component instance whenever
+  it receives new props or store state.
+ */
+
+function match(arg, factories, name) {
+  for (var i = factories.length - 1; i >= 0; i--) {
+    var result = factories[i](arg);
+    if (result) return result;
+  }
+
+  return function (dispatch, options) {
+    throw new Error("Invalid value of type " + typeof arg + " for " + name + " argument when connecting component " + options.wrappedComponentName + ".");
+  };
+}
+
+function strictEqual(a, b) {
+  return a === b;
+} // createConnect with default args builds the 'official' connect behavior. Calling it with
+// different options opens up some testing and extensibility scenarios
+
+
+function createConnect(_temp) {
+  var _ref = _temp === void 0 ? {} : _temp,
+      _ref$connectHOC = _ref.connectHOC,
+      connectHOC = _ref$connectHOC === void 0 ? _components_connectAdvanced__WEBPACK_IMPORTED_MODULE_2__["default"] : _ref$connectHOC,
+      _ref$mapStateToPropsF = _ref.mapStateToPropsFactories,
+      mapStateToPropsFactories = _ref$mapStateToPropsF === void 0 ? _mapStateToProps__WEBPACK_IMPORTED_MODULE_5__["default"] : _ref$mapStateToPropsF,
+      _ref$mapDispatchToPro = _ref.mapDispatchToPropsFactories,
+      mapDispatchToPropsFactories = _ref$mapDispatchToPro === void 0 ? _mapDispatchToProps__WEBPACK_IMPORTED_MODULE_4__["default"] : _ref$mapDispatchToPro,
+      _ref$mergePropsFactor = _ref.mergePropsFactories,
+      mergePropsFactories = _ref$mergePropsFactor === void 0 ? _mergeProps__WEBPACK_IMPORTED_MODULE_6__["default"] : _ref$mergePropsFactor,
+      _ref$selectorFactory = _ref.selectorFactory,
+      selectorFactory = _ref$selectorFactory === void 0 ? _selectorFactory__WEBPACK_IMPORTED_MODULE_7__["default"] : _ref$selectorFactory;
+
+  return function connect(mapStateToProps, mapDispatchToProps, mergeProps, _ref2) {
+    if (_ref2 === void 0) {
+      _ref2 = {};
+    }
+
+    var _ref3 = _ref2,
+        _ref3$pure = _ref3.pure,
+        pure = _ref3$pure === void 0 ? true : _ref3$pure,
+        _ref3$areStatesEqual = _ref3.areStatesEqual,
+        areStatesEqual = _ref3$areStatesEqual === void 0 ? strictEqual : _ref3$areStatesEqual,
+        _ref3$areOwnPropsEqua = _ref3.areOwnPropsEqual,
+        areOwnPropsEqual = _ref3$areOwnPropsEqua === void 0 ? _utils_shallowEqual__WEBPACK_IMPORTED_MODULE_3__["default"] : _ref3$areOwnPropsEqua,
+        _ref3$areStatePropsEq = _ref3.areStatePropsEqual,
+        areStatePropsEqual = _ref3$areStatePropsEq === void 0 ? _utils_shallowEqual__WEBPACK_IMPORTED_MODULE_3__["default"] : _ref3$areStatePropsEq,
+        _ref3$areMergedPropsE = _ref3.areMergedPropsEqual,
+        areMergedPropsEqual = _ref3$areMergedPropsE === void 0 ? _utils_shallowEqual__WEBPACK_IMPORTED_MODULE_3__["default"] : _ref3$areMergedPropsE,
+        extraOptions = Object(_babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_1__["default"])(_ref3, ["pure", "areStatesEqual", "areOwnPropsEqual", "areStatePropsEqual", "areMergedPropsEqual"]);
+
+    var initMapStateToProps = match(mapStateToProps, mapStateToPropsFactories, 'mapStateToProps');
+    var initMapDispatchToProps = match(mapDispatchToProps, mapDispatchToPropsFactories, 'mapDispatchToProps');
+    var initMergeProps = match(mergeProps, mergePropsFactories, 'mergeProps');
+    return connectHOC(selectorFactory, Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({
+      // used in error messages
+      methodName: 'connect',
+      // used to compute Connect's displayName from the wrapped component's displayName.
+      getDisplayName: function getDisplayName(name) {
+        return "Connect(" + name + ")";
+      },
+      // if mapStateToProps is falsy, the Connect component doesn't subscribe to store state changes
+      shouldHandleStateChanges: Boolean(mapStateToProps),
+      // passed through to selectorFactory
+      initMapStateToProps: initMapStateToProps,
+      initMapDispatchToProps: initMapDispatchToProps,
+      initMergeProps: initMergeProps,
+      pure: pure,
+      areStatesEqual: areStatesEqual,
+      areOwnPropsEqual: areOwnPropsEqual,
+      areStatePropsEqual: areStatePropsEqual,
+      areMergedPropsEqual: areMergedPropsEqual
+    }, extraOptions));
+  };
+}
+/* harmony default export */ __webpack_exports__["default"] = (/*#__PURE__*/createConnect());
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/mapDispatchToProps.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/mapDispatchToProps.js ***!
+  \*******************************************************************/
+/*! exports provided: whenMapDispatchToPropsIsFunction, whenMapDispatchToPropsIsMissing, whenMapDispatchToPropsIsObject, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMapDispatchToPropsIsFunction", function() { return whenMapDispatchToPropsIsFunction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMapDispatchToPropsIsMissing", function() { return whenMapDispatchToPropsIsMissing; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMapDispatchToPropsIsObject", function() { return whenMapDispatchToPropsIsObject; });
+/* harmony import */ var redux__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! redux */ "./node_modules/redux/es/redux.js");
+/* harmony import */ var _wrapMapToProps__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./wrapMapToProps */ "./node_modules/react-redux/es/connect/wrapMapToProps.js");
+
+
+function whenMapDispatchToPropsIsFunction(mapDispatchToProps) {
+  return typeof mapDispatchToProps === 'function' ? Object(_wrapMapToProps__WEBPACK_IMPORTED_MODULE_1__["wrapMapToPropsFunc"])(mapDispatchToProps, 'mapDispatchToProps') : undefined;
+}
+function whenMapDispatchToPropsIsMissing(mapDispatchToProps) {
+  return !mapDispatchToProps ? Object(_wrapMapToProps__WEBPACK_IMPORTED_MODULE_1__["wrapMapToPropsConstant"])(function (dispatch) {
+    return {
+      dispatch: dispatch
+    };
+  }) : undefined;
+}
+function whenMapDispatchToPropsIsObject(mapDispatchToProps) {
+  return mapDispatchToProps && typeof mapDispatchToProps === 'object' ? Object(_wrapMapToProps__WEBPACK_IMPORTED_MODULE_1__["wrapMapToPropsConstant"])(function (dispatch) {
+    return Object(redux__WEBPACK_IMPORTED_MODULE_0__["bindActionCreators"])(mapDispatchToProps, dispatch);
+  }) : undefined;
+}
+/* harmony default export */ __webpack_exports__["default"] = ([whenMapDispatchToPropsIsFunction, whenMapDispatchToPropsIsMissing, whenMapDispatchToPropsIsObject]);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/mapStateToProps.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/mapStateToProps.js ***!
+  \****************************************************************/
+/*! exports provided: whenMapStateToPropsIsFunction, whenMapStateToPropsIsMissing, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMapStateToPropsIsFunction", function() { return whenMapStateToPropsIsFunction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMapStateToPropsIsMissing", function() { return whenMapStateToPropsIsMissing; });
+/* harmony import */ var _wrapMapToProps__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./wrapMapToProps */ "./node_modules/react-redux/es/connect/wrapMapToProps.js");
+
+function whenMapStateToPropsIsFunction(mapStateToProps) {
+  return typeof mapStateToProps === 'function' ? Object(_wrapMapToProps__WEBPACK_IMPORTED_MODULE_0__["wrapMapToPropsFunc"])(mapStateToProps, 'mapStateToProps') : undefined;
+}
+function whenMapStateToPropsIsMissing(mapStateToProps) {
+  return !mapStateToProps ? Object(_wrapMapToProps__WEBPACK_IMPORTED_MODULE_0__["wrapMapToPropsConstant"])(function () {
+    return {};
+  }) : undefined;
+}
+/* harmony default export */ __webpack_exports__["default"] = ([whenMapStateToPropsIsFunction, whenMapStateToPropsIsMissing]);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/mergeProps.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/mergeProps.js ***!
+  \***********************************************************/
+/*! exports provided: defaultMergeProps, wrapMergePropsFunc, whenMergePropsIsFunction, whenMergePropsIsOmitted, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "defaultMergeProps", function() { return defaultMergeProps; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wrapMergePropsFunc", function() { return wrapMergePropsFunc; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMergePropsIsFunction", function() { return whenMergePropsIsFunction; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "whenMergePropsIsOmitted", function() { return whenMergePropsIsOmitted; });
+/* harmony import */ var _babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/esm/extends */ "./node_modules/@babel/runtime/helpers/esm/extends.js");
+/* harmony import */ var _utils_verifyPlainObject__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../utils/verifyPlainObject */ "./node_modules/react-redux/es/utils/verifyPlainObject.js");
+
+
+function defaultMergeProps(stateProps, dispatchProps, ownProps) {
+  return Object(_babel_runtime_helpers_esm_extends__WEBPACK_IMPORTED_MODULE_0__["default"])({}, ownProps, {}, stateProps, {}, dispatchProps);
+}
+function wrapMergePropsFunc(mergeProps) {
+  return function initMergePropsProxy(dispatch, _ref) {
+    var displayName = _ref.displayName,
+        pure = _ref.pure,
+        areMergedPropsEqual = _ref.areMergedPropsEqual;
+    var hasRunOnce = false;
+    var mergedProps;
+    return function mergePropsProxy(stateProps, dispatchProps, ownProps) {
+      var nextMergedProps = mergeProps(stateProps, dispatchProps, ownProps);
+
+      if (hasRunOnce) {
+        if (!pure || !areMergedPropsEqual(nextMergedProps, mergedProps)) mergedProps = nextMergedProps;
+      } else {
+        hasRunOnce = true;
+        mergedProps = nextMergedProps;
+        if (true) Object(_utils_verifyPlainObject__WEBPACK_IMPORTED_MODULE_1__["default"])(mergedProps, displayName, 'mergeProps');
+      }
+
+      return mergedProps;
+    };
+  };
+}
+function whenMergePropsIsFunction(mergeProps) {
+  return typeof mergeProps === 'function' ? wrapMergePropsFunc(mergeProps) : undefined;
+}
+function whenMergePropsIsOmitted(mergeProps) {
+  return !mergeProps ? function () {
+    return defaultMergeProps;
+  } : undefined;
+}
+/* harmony default export */ __webpack_exports__["default"] = ([whenMergePropsIsFunction, whenMergePropsIsOmitted]);
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/selectorFactory.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/selectorFactory.js ***!
+  \****************************************************************/
+/*! exports provided: impureFinalPropsSelectorFactory, pureFinalPropsSelectorFactory, default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "impureFinalPropsSelectorFactory", function() { return impureFinalPropsSelectorFactory; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "pureFinalPropsSelectorFactory", function() { return pureFinalPropsSelectorFactory; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return finalPropsSelectorFactory; });
+/* harmony import */ var _babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! @babel/runtime/helpers/esm/objectWithoutPropertiesLoose */ "./node_modules/@babel/runtime/helpers/esm/objectWithoutPropertiesLoose.js");
+/* harmony import */ var _verifySubselectors__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./verifySubselectors */ "./node_modules/react-redux/es/connect/verifySubselectors.js");
+
+
+function impureFinalPropsSelectorFactory(mapStateToProps, mapDispatchToProps, mergeProps, dispatch) {
+  return function impureFinalPropsSelector(state, ownProps) {
+    return mergeProps(mapStateToProps(state, ownProps), mapDispatchToProps(dispatch, ownProps), ownProps);
+  };
+}
+function pureFinalPropsSelectorFactory(mapStateToProps, mapDispatchToProps, mergeProps, dispatch, _ref) {
+  var areStatesEqual = _ref.areStatesEqual,
+      areOwnPropsEqual = _ref.areOwnPropsEqual,
+      areStatePropsEqual = _ref.areStatePropsEqual;
+  var hasRunAtLeastOnce = false;
+  var state;
+  var ownProps;
+  var stateProps;
+  var dispatchProps;
+  var mergedProps;
+
+  function handleFirstCall(firstState, firstOwnProps) {
+    state = firstState;
+    ownProps = firstOwnProps;
+    stateProps = mapStateToProps(state, ownProps);
+    dispatchProps = mapDispatchToProps(dispatch, ownProps);
+    mergedProps = mergeProps(stateProps, dispatchProps, ownProps);
+    hasRunAtLeastOnce = true;
+    return mergedProps;
+  }
+
+  function handleNewPropsAndNewState() {
+    stateProps = mapStateToProps(state, ownProps);
+    if (mapDispatchToProps.dependsOnOwnProps) dispatchProps = mapDispatchToProps(dispatch, ownProps);
+    mergedProps = mergeProps(stateProps, dispatchProps, ownProps);
+    return mergedProps;
+  }
+
+  function handleNewProps() {
+    if (mapStateToProps.dependsOnOwnProps) stateProps = mapStateToProps(state, ownProps);
+    if (mapDispatchToProps.dependsOnOwnProps) dispatchProps = mapDispatchToProps(dispatch, ownProps);
+    mergedProps = mergeProps(stateProps, dispatchProps, ownProps);
+    return mergedProps;
+  }
+
+  function handleNewState() {
+    var nextStateProps = mapStateToProps(state, ownProps);
+    var statePropsChanged = !areStatePropsEqual(nextStateProps, stateProps);
+    stateProps = nextStateProps;
+    if (statePropsChanged) mergedProps = mergeProps(stateProps, dispatchProps, ownProps);
+    return mergedProps;
+  }
+
+  function handleSubsequentCalls(nextState, nextOwnProps) {
+    var propsChanged = !areOwnPropsEqual(nextOwnProps, ownProps);
+    var stateChanged = !areStatesEqual(nextState, state);
+    state = nextState;
+    ownProps = nextOwnProps;
+    if (propsChanged && stateChanged) return handleNewPropsAndNewState();
+    if (propsChanged) return handleNewProps();
+    if (stateChanged) return handleNewState();
+    return mergedProps;
+  }
+
+  return function pureFinalPropsSelector(nextState, nextOwnProps) {
+    return hasRunAtLeastOnce ? handleSubsequentCalls(nextState, nextOwnProps) : handleFirstCall(nextState, nextOwnProps);
+  };
+} // TODO: Add more comments
+// If pure is true, the selector returned by selectorFactory will memoize its results,
+// allowing connectAdvanced's shouldComponentUpdate to return false if final
+// props have not changed. If false, the selector will always return a new
+// object and shouldComponentUpdate will always return true.
+
+function finalPropsSelectorFactory(dispatch, _ref2) {
+  var initMapStateToProps = _ref2.initMapStateToProps,
+      initMapDispatchToProps = _ref2.initMapDispatchToProps,
+      initMergeProps = _ref2.initMergeProps,
+      options = Object(_babel_runtime_helpers_esm_objectWithoutPropertiesLoose__WEBPACK_IMPORTED_MODULE_0__["default"])(_ref2, ["initMapStateToProps", "initMapDispatchToProps", "initMergeProps"]);
+
+  var mapStateToProps = initMapStateToProps(dispatch, options);
+  var mapDispatchToProps = initMapDispatchToProps(dispatch, options);
+  var mergeProps = initMergeProps(dispatch, options);
+
+  if (true) {
+    Object(_verifySubselectors__WEBPACK_IMPORTED_MODULE_1__["default"])(mapStateToProps, mapDispatchToProps, mergeProps, options.displayName);
+  }
+
+  var selectorFactory = options.pure ? pureFinalPropsSelectorFactory : impureFinalPropsSelectorFactory;
+  return selectorFactory(mapStateToProps, mapDispatchToProps, mergeProps, dispatch, options);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/verifySubselectors.js":
+/*!*******************************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/verifySubselectors.js ***!
+  \*******************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return verifySubselectors; });
+/* harmony import */ var _utils_warning__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils/warning */ "./node_modules/react-redux/es/utils/warning.js");
+
+
+function verify(selector, methodName, displayName) {
+  if (!selector) {
+    throw new Error("Unexpected value for " + methodName + " in " + displayName + ".");
+  } else if (methodName === 'mapStateToProps' || methodName === 'mapDispatchToProps') {
+    if (!Object.prototype.hasOwnProperty.call(selector, 'dependsOnOwnProps')) {
+      Object(_utils_warning__WEBPACK_IMPORTED_MODULE_0__["default"])("The selector for " + methodName + " of " + displayName + " did not specify a value for dependsOnOwnProps.");
+    }
+  }
+}
+
+function verifySubselectors(mapStateToProps, mapDispatchToProps, mergeProps, displayName) {
+  verify(mapStateToProps, 'mapStateToProps', displayName);
+  verify(mapDispatchToProps, 'mapDispatchToProps', displayName);
+  verify(mergeProps, 'mergeProps', displayName);
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/connect/wrapMapToProps.js":
+/*!***************************************************************!*\
+  !*** ./node_modules/react-redux/es/connect/wrapMapToProps.js ***!
+  \***************************************************************/
+/*! exports provided: wrapMapToPropsConstant, getDependsOnOwnProps, wrapMapToPropsFunc */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wrapMapToPropsConstant", function() { return wrapMapToPropsConstant; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getDependsOnOwnProps", function() { return getDependsOnOwnProps; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "wrapMapToPropsFunc", function() { return wrapMapToPropsFunc; });
+/* harmony import */ var _utils_verifyPlainObject__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils/verifyPlainObject */ "./node_modules/react-redux/es/utils/verifyPlainObject.js");
+
+function wrapMapToPropsConstant(getConstant) {
+  return function initConstantSelector(dispatch, options) {
+    var constant = getConstant(dispatch, options);
+
+    function constantSelector() {
+      return constant;
+    }
+
+    constantSelector.dependsOnOwnProps = false;
+    return constantSelector;
+  };
+} // dependsOnOwnProps is used by createMapToPropsProxy to determine whether to pass props as args
+// to the mapToProps function being wrapped. It is also used by makePurePropsSelector to determine
+// whether mapToProps needs to be invoked when props have changed.
+//
+// A length of one signals that mapToProps does not depend on props from the parent component.
+// A length of zero is assumed to mean mapToProps is getting args via arguments or ...args and
+// therefore not reporting its length accurately..
+
+function getDependsOnOwnProps(mapToProps) {
+  return mapToProps.dependsOnOwnProps !== null && mapToProps.dependsOnOwnProps !== undefined ? Boolean(mapToProps.dependsOnOwnProps) : mapToProps.length !== 1;
+} // Used by whenMapStateToPropsIsFunction and whenMapDispatchToPropsIsFunction,
+// this function wraps mapToProps in a proxy function which does several things:
+//
+//  * Detects whether the mapToProps function being called depends on props, which
+//    is used by selectorFactory to decide if it should reinvoke on props changes.
+//
+//  * On first call, handles mapToProps if returns another function, and treats that
+//    new function as the true mapToProps for subsequent calls.
+//
+//  * On first call, verifies the first result is a plain object, in order to warn
+//    the developer that their mapToProps function is not returning a valid result.
+//
+
+function wrapMapToPropsFunc(mapToProps, methodName) {
+  return function initProxySelector(dispatch, _ref) {
+    var displayName = _ref.displayName;
+
+    var proxy = function mapToPropsProxy(stateOrDispatch, ownProps) {
+      return proxy.dependsOnOwnProps ? proxy.mapToProps(stateOrDispatch, ownProps) : proxy.mapToProps(stateOrDispatch);
+    }; // allow detectFactoryAndVerify to get ownProps
+
+
+    proxy.dependsOnOwnProps = true;
+
+    proxy.mapToProps = function detectFactoryAndVerify(stateOrDispatch, ownProps) {
+      proxy.mapToProps = mapToProps;
+      proxy.dependsOnOwnProps = getDependsOnOwnProps(mapToProps);
+      var props = proxy(stateOrDispatch, ownProps);
+
+      if (typeof props === 'function') {
+        proxy.mapToProps = props;
+        proxy.dependsOnOwnProps = getDependsOnOwnProps(props);
+        props = proxy(stateOrDispatch, ownProps);
+      }
+
+      if (true) Object(_utils_verifyPlainObject__WEBPACK_IMPORTED_MODULE_0__["default"])(props, displayName, methodName);
+      return props;
+    };
+
+    return proxy;
+  };
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/hooks/useDispatch.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/react-redux/es/hooks/useDispatch.js ***!
+  \**********************************************************/
+/*! exports provided: createDispatchHook, useDispatch */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createDispatchHook", function() { return createDispatchHook; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useDispatch", function() { return useDispatch; });
+/* harmony import */ var _components_Context__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../components/Context */ "./node_modules/react-redux/es/components/Context.js");
+/* harmony import */ var _useStore__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./useStore */ "./node_modules/react-redux/es/hooks/useStore.js");
+
+
+/**
+ * Hook factory, which creates a `useDispatch` hook bound to a given context.
+ *
+ * @param {React.Context} [context=ReactReduxContext] Context passed to your `<Provider>`.
+ * @returns {Function} A `useDispatch` hook bound to the specified context.
+ */
+
+function createDispatchHook(context) {
+  if (context === void 0) {
+    context = _components_Context__WEBPACK_IMPORTED_MODULE_0__["ReactReduxContext"];
+  }
+
+  var useStore = context === _components_Context__WEBPACK_IMPORTED_MODULE_0__["ReactReduxContext"] ? _useStore__WEBPACK_IMPORTED_MODULE_1__["useStore"] : Object(_useStore__WEBPACK_IMPORTED_MODULE_1__["createStoreHook"])(context);
+  return function useDispatch() {
+    var store = useStore();
+    return store.dispatch;
+  };
+}
+/**
+ * A hook to access the redux `dispatch` function.
+ *
+ * @returns {any|function} redux store's `dispatch` function
+ *
+ * @example
+ *
+ * import React, { useCallback } from 'react'
+ * import { useDispatch } from 'react-redux'
+ *
+ * export const CounterComponent = ({ value }) => {
+ *   const dispatch = useDispatch()
+ *   const increaseCounter = useCallback(() => dispatch({ type: 'increase-counter' }), [])
+ *   return (
+ *     <div>
+ *       <span>{value}</span>
+ *       <button onClick={increaseCounter}>Increase counter</button>
+ *     </div>
+ *   )
+ * }
+ */
+
+var useDispatch =
+/*#__PURE__*/
+createDispatchHook();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/hooks/useReduxContext.js":
+/*!**************************************************************!*\
+  !*** ./node_modules/react-redux/es/hooks/useReduxContext.js ***!
+  \**************************************************************/
+/*! exports provided: useReduxContext */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useReduxContext", function() { return useReduxContext; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _components_Context__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/Context */ "./node_modules/react-redux/es/components/Context.js");
+
+
+/**
+ * A hook to access the value of the `ReactReduxContext`. This is a low-level
+ * hook that you should usually not need to call directly.
+ *
+ * @returns {any} the value of the `ReactReduxContext`
+ *
+ * @example
+ *
+ * import React from 'react'
+ * import { useReduxContext } from 'react-redux'
+ *
+ * export const CounterComponent = ({ value }) => {
+ *   const { store } = useReduxContext()
+ *   return <div>{store.getState()}</div>
+ * }
+ */
+
+function useReduxContext() {
+  var contextValue = Object(react__WEBPACK_IMPORTED_MODULE_0__["useContext"])(_components_Context__WEBPACK_IMPORTED_MODULE_1__["ReactReduxContext"]);
+
+  if ( true && !contextValue) {
+    throw new Error('could not find react-redux context value; please ensure the component is wrapped in a <Provider>');
+  }
+
+  return contextValue;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/hooks/useSelector.js":
+/*!**********************************************************!*\
+  !*** ./node_modules/react-redux/es/hooks/useSelector.js ***!
+  \**********************************************************/
+/*! exports provided: createSelectorHook, useSelector */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createSelectorHook", function() { return createSelectorHook; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useSelector", function() { return useSelector; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _useReduxContext__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./useReduxContext */ "./node_modules/react-redux/es/hooks/useReduxContext.js");
+/* harmony import */ var _utils_Subscription__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../utils/Subscription */ "./node_modules/react-redux/es/utils/Subscription.js");
+/* harmony import */ var _utils_useIsomorphicLayoutEffect__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../utils/useIsomorphicLayoutEffect */ "./node_modules/react-redux/es/utils/useIsomorphicLayoutEffect.js");
+/* harmony import */ var _components_Context__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../components/Context */ "./node_modules/react-redux/es/components/Context.js");
+
+
+
+
+
+
+var refEquality = function refEquality(a, b) {
+  return a === b;
+};
+
+function useSelectorWithStoreAndSubscription(selector, equalityFn, store, contextSub) {
+  var _useReducer = Object(react__WEBPACK_IMPORTED_MODULE_0__["useReducer"])(function (s) {
+    return s + 1;
+  }, 0),
+      forceRender = _useReducer[1];
+
+  var subscription = Object(react__WEBPACK_IMPORTED_MODULE_0__["useMemo"])(function () {
+    return new _utils_Subscription__WEBPACK_IMPORTED_MODULE_2__["default"](store, contextSub);
+  }, [store, contextSub]);
+  var latestSubscriptionCallbackError = Object(react__WEBPACK_IMPORTED_MODULE_0__["useRef"])();
+  var latestSelector = Object(react__WEBPACK_IMPORTED_MODULE_0__["useRef"])();
+  var latestStoreState = Object(react__WEBPACK_IMPORTED_MODULE_0__["useRef"])();
+  var latestSelectedState = Object(react__WEBPACK_IMPORTED_MODULE_0__["useRef"])();
+  var storeState = store.getState();
+  var selectedState;
+
+  try {
+    if (selector !== latestSelector.current || storeState !== latestStoreState.current || latestSubscriptionCallbackError.current) {
+      selectedState = selector(storeState);
+    } else {
+      selectedState = latestSelectedState.current;
+    }
+  } catch (err) {
+    if (latestSubscriptionCallbackError.current) {
+      err.message += "\nThe error may be correlated with this previous error:\n" + latestSubscriptionCallbackError.current.stack + "\n\n";
+    }
+
+    throw err;
+  }
+
+  Object(_utils_useIsomorphicLayoutEffect__WEBPACK_IMPORTED_MODULE_3__["useIsomorphicLayoutEffect"])(function () {
+    latestSelector.current = selector;
+    latestStoreState.current = storeState;
+    latestSelectedState.current = selectedState;
+    latestSubscriptionCallbackError.current = undefined;
+  });
+  Object(_utils_useIsomorphicLayoutEffect__WEBPACK_IMPORTED_MODULE_3__["useIsomorphicLayoutEffect"])(function () {
+    function checkForUpdates() {
+      try {
+        var newSelectedState = latestSelector.current(store.getState());
+
+        if (equalityFn(newSelectedState, latestSelectedState.current)) {
+          return;
+        }
+
+        latestSelectedState.current = newSelectedState;
+      } catch (err) {
+        // we ignore all errors here, since when the component
+        // is re-rendered, the selectors are called again, and
+        // will throw again, if neither props nor store state
+        // changed
+        latestSubscriptionCallbackError.current = err;
+      }
+
+      forceRender();
+    }
+
+    subscription.onStateChange = checkForUpdates;
+    subscription.trySubscribe();
+    checkForUpdates();
+    return function () {
+      return subscription.tryUnsubscribe();
+    };
+  }, [store, subscription]);
+  return selectedState;
+}
+/**
+ * Hook factory, which creates a `useSelector` hook bound to a given context.
+ *
+ * @param {React.Context} [context=ReactReduxContext] Context passed to your `<Provider>`.
+ * @returns {Function} A `useSelector` hook bound to the specified context.
+ */
+
+
+function createSelectorHook(context) {
+  if (context === void 0) {
+    context = _components_Context__WEBPACK_IMPORTED_MODULE_4__["ReactReduxContext"];
+  }
+
+  var useReduxContext = context === _components_Context__WEBPACK_IMPORTED_MODULE_4__["ReactReduxContext"] ? _useReduxContext__WEBPACK_IMPORTED_MODULE_1__["useReduxContext"] : function () {
+    return Object(react__WEBPACK_IMPORTED_MODULE_0__["useContext"])(context);
+  };
+  return function useSelector(selector, equalityFn) {
+    if (equalityFn === void 0) {
+      equalityFn = refEquality;
+    }
+
+    if ( true && !selector) {
+      throw new Error("You must pass a selector to useSelector");
+    }
+
+    var _useReduxContext = useReduxContext(),
+        store = _useReduxContext.store,
+        contextSub = _useReduxContext.subscription;
+
+    var selectedState = useSelectorWithStoreAndSubscription(selector, equalityFn, store, contextSub);
+    Object(react__WEBPACK_IMPORTED_MODULE_0__["useDebugValue"])(selectedState);
+    return selectedState;
+  };
+}
+/**
+ * A hook to access the redux store's state. This hook takes a selector function
+ * as an argument. The selector is called with the store state.
+ *
+ * This hook takes an optional equality comparison function as the second parameter
+ * that allows you to customize the way the selected state is compared to determine
+ * whether the component needs to be re-rendered.
+ *
+ * @param {Function} selector the selector function
+ * @param {Function=} equalityFn the function that will be used to determine equality
+ *
+ * @returns {any} the selected state
+ *
+ * @example
+ *
+ * import React from 'react'
+ * import { useSelector } from 'react-redux'
+ *
+ * export const CounterComponent = () => {
+ *   const counter = useSelector(state => state.counter)
+ *   return <div>{counter}</div>
+ * }
+ */
+
+var useSelector =
+/*#__PURE__*/
+createSelectorHook();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/hooks/useStore.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/react-redux/es/hooks/useStore.js ***!
+  \*******************************************************/
+/*! exports provided: createStoreHook, useStore */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createStoreHook", function() { return createStoreHook; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useStore", function() { return useStore; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var _components_Context__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../components/Context */ "./node_modules/react-redux/es/components/Context.js");
+/* harmony import */ var _useReduxContext__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./useReduxContext */ "./node_modules/react-redux/es/hooks/useReduxContext.js");
+
+
+
+/**
+ * Hook factory, which creates a `useStore` hook bound to a given context.
+ *
+ * @param {React.Context} [context=ReactReduxContext] Context passed to your `<Provider>`.
+ * @returns {Function} A `useStore` hook bound to the specified context.
+ */
+
+function createStoreHook(context) {
+  if (context === void 0) {
+    context = _components_Context__WEBPACK_IMPORTED_MODULE_1__["ReactReduxContext"];
+  }
+
+  var useReduxContext = context === _components_Context__WEBPACK_IMPORTED_MODULE_1__["ReactReduxContext"] ? _useReduxContext__WEBPACK_IMPORTED_MODULE_2__["useReduxContext"] : function () {
+    return Object(react__WEBPACK_IMPORTED_MODULE_0__["useContext"])(context);
+  };
+  return function useStore() {
+    var _useReduxContext = useReduxContext(),
+        store = _useReduxContext.store;
+
+    return store;
+  };
+}
+/**
+ * A hook to access the redux store.
+ *
+ * @returns {any} the redux store
+ *
+ * @example
+ *
+ * import React from 'react'
+ * import { useStore } from 'react-redux'
+ *
+ * export const ExampleComponent = () => {
+ *   const store = useStore()
+ *   return <div>{store.getState()}</div>
+ * }
+ */
+
+var useStore =
+/*#__PURE__*/
+createStoreHook();
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/index.js":
+/*!**********************************************!*\
+  !*** ./node_modules/react-redux/es/index.js ***!
+  \**********************************************/
+/*! exports provided: Provider, connectAdvanced, ReactReduxContext, connect, batch, useDispatch, createDispatchHook, useSelector, createSelectorHook, useStore, createStoreHook, shallowEqual */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var _components_Provider__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./components/Provider */ "./node_modules/react-redux/es/components/Provider.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "Provider", function() { return _components_Provider__WEBPACK_IMPORTED_MODULE_0__["default"]; });
+
+/* harmony import */ var _components_connectAdvanced__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./components/connectAdvanced */ "./node_modules/react-redux/es/components/connectAdvanced.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "connectAdvanced", function() { return _components_connectAdvanced__WEBPACK_IMPORTED_MODULE_1__["default"]; });
+
+/* harmony import */ var _components_Context__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./components/Context */ "./node_modules/react-redux/es/components/Context.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "ReactReduxContext", function() { return _components_Context__WEBPACK_IMPORTED_MODULE_2__["ReactReduxContext"]; });
+
+/* harmony import */ var _connect_connect__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./connect/connect */ "./node_modules/react-redux/es/connect/connect.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "connect", function() { return _connect_connect__WEBPACK_IMPORTED_MODULE_3__["default"]; });
+
+/* harmony import */ var _hooks_useDispatch__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./hooks/useDispatch */ "./node_modules/react-redux/es/hooks/useDispatch.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "useDispatch", function() { return _hooks_useDispatch__WEBPACK_IMPORTED_MODULE_4__["useDispatch"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "createDispatchHook", function() { return _hooks_useDispatch__WEBPACK_IMPORTED_MODULE_4__["createDispatchHook"]; });
+
+/* harmony import */ var _hooks_useSelector__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./hooks/useSelector */ "./node_modules/react-redux/es/hooks/useSelector.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "useSelector", function() { return _hooks_useSelector__WEBPACK_IMPORTED_MODULE_5__["useSelector"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "createSelectorHook", function() { return _hooks_useSelector__WEBPACK_IMPORTED_MODULE_5__["createSelectorHook"]; });
+
+/* harmony import */ var _hooks_useStore__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./hooks/useStore */ "./node_modules/react-redux/es/hooks/useStore.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "useStore", function() { return _hooks_useStore__WEBPACK_IMPORTED_MODULE_6__["useStore"]; });
+
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "createStoreHook", function() { return _hooks_useStore__WEBPACK_IMPORTED_MODULE_6__["createStoreHook"]; });
+
+/* harmony import */ var _utils_batch__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ./utils/batch */ "./node_modules/react-redux/es/utils/batch.js");
+/* harmony import */ var _utils_reactBatchedUpdates__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! ./utils/reactBatchedUpdates */ "./node_modules/react-redux/es/utils/reactBatchedUpdates.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "batch", function() { return _utils_reactBatchedUpdates__WEBPACK_IMPORTED_MODULE_8__["unstable_batchedUpdates"]; });
+
+/* harmony import */ var _utils_shallowEqual__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! ./utils/shallowEqual */ "./node_modules/react-redux/es/utils/shallowEqual.js");
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "shallowEqual", function() { return _utils_shallowEqual__WEBPACK_IMPORTED_MODULE_9__["default"]; });
+
+
+
+
+
+
+
+
+
+
+
+Object(_utils_batch__WEBPACK_IMPORTED_MODULE_7__["setBatch"])(_utils_reactBatchedUpdates__WEBPACK_IMPORTED_MODULE_8__["unstable_batchedUpdates"]);
+
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/Subscription.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/Subscription.js ***!
+  \***********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return Subscription; });
+/* harmony import */ var _batch__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./batch */ "./node_modules/react-redux/es/utils/batch.js");
+ // encapsulates the subscription logic for connecting a component to the redux store, as
+// well as nesting subscriptions of descendant components, so that we can ensure the
+// ancestor components re-render before descendants
+
+var nullListeners = {
+  notify: function notify() {}
+};
+
+function createListenerCollection() {
+  var batch = Object(_batch__WEBPACK_IMPORTED_MODULE_0__["getBatch"])();
+  var first = null;
+  var last = null;
+  return {
+    clear: function clear() {
+      first = null;
+      last = null;
+    },
+    notify: function notify() {
+      batch(function () {
+        var listener = first;
+
+        while (listener) {
+          listener.callback();
+          listener = listener.next;
+        }
+      });
+    },
+    get: function get() {
+      var listeners = [];
+      var listener = first;
+
+      while (listener) {
+        listeners.push(listener);
+        listener = listener.next;
+      }
+
+      return listeners;
+    },
+    subscribe: function subscribe(callback) {
+      var isSubscribed = true;
+      var listener = last = {
+        callback: callback,
+        next: null,
+        prev: last
+      };
+
+      if (listener.prev) {
+        listener.prev.next = listener;
+      } else {
+        first = listener;
+      }
+
+      return function unsubscribe() {
+        if (!isSubscribed || first === null) return;
+        isSubscribed = false;
+
+        if (listener.next) {
+          listener.next.prev = listener.prev;
+        } else {
+          last = listener.prev;
+        }
+
+        if (listener.prev) {
+          listener.prev.next = listener.next;
+        } else {
+          first = listener.next;
+        }
+      };
+    }
+  };
+}
+
+var Subscription =
+/*#__PURE__*/
+function () {
+  function Subscription(store, parentSub) {
+    this.store = store;
+    this.parentSub = parentSub;
+    this.unsubscribe = null;
+    this.listeners = nullListeners;
+    this.handleChangeWrapper = this.handleChangeWrapper.bind(this);
+  }
+
+  var _proto = Subscription.prototype;
+
+  _proto.addNestedSub = function addNestedSub(listener) {
+    this.trySubscribe();
+    return this.listeners.subscribe(listener);
+  };
+
+  _proto.notifyNestedSubs = function notifyNestedSubs() {
+    this.listeners.notify();
+  };
+
+  _proto.handleChangeWrapper = function handleChangeWrapper() {
+    if (this.onStateChange) {
+      this.onStateChange();
+    }
+  };
+
+  _proto.isSubscribed = function isSubscribed() {
+    return Boolean(this.unsubscribe);
+  };
+
+  _proto.trySubscribe = function trySubscribe() {
+    if (!this.unsubscribe) {
+      this.unsubscribe = this.parentSub ? this.parentSub.addNestedSub(this.handleChangeWrapper) : this.store.subscribe(this.handleChangeWrapper);
+      this.listeners = createListenerCollection();
+    }
+  };
+
+  _proto.tryUnsubscribe = function tryUnsubscribe() {
+    if (this.unsubscribe) {
+      this.unsubscribe();
+      this.unsubscribe = null;
+      this.listeners.clear();
+      this.listeners = nullListeners;
+    }
+  };
+
+  return Subscription;
+}();
+
+
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/batch.js":
+/*!****************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/batch.js ***!
+  \****************************************************/
+/*! exports provided: setBatch, getBatch */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "setBatch", function() { return setBatch; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "getBatch", function() { return getBatch; });
+// Default to a dummy "batch" implementation that just runs the callback
+function defaultNoopBatch(callback) {
+  callback();
+}
+
+var batch = defaultNoopBatch; // Allow injecting another batching function later
+
+var setBatch = function setBatch(newBatch) {
+  return batch = newBatch;
+}; // Supply a getter just to skip dealing with ESM bindings
+
+var getBatch = function getBatch() {
+  return batch;
+};
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/isPlainObject.js":
+/*!************************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/isPlainObject.js ***!
+  \************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return isPlainObject; });
+/**
+ * @param {any} obj The object to inspect.
+ * @returns {boolean} True if the argument appears to be a plain object.
+ */
+function isPlainObject(obj) {
+  if (typeof obj !== 'object' || obj === null) return false;
+  var proto = Object.getPrototypeOf(obj);
+  if (proto === null) return true;
+  var baseProto = proto;
+
+  while (Object.getPrototypeOf(baseProto) !== null) {
+    baseProto = Object.getPrototypeOf(baseProto);
+  }
+
+  return proto === baseProto;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/reactBatchedUpdates.js":
+/*!******************************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/reactBatchedUpdates.js ***!
+  \******************************************************************/
+/*! exports provided: unstable_batchedUpdates */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react-dom */ "./node_modules/react-dom/index.js");
+/* harmony import */ var react_dom__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react_dom__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony reexport (safe) */ __webpack_require__.d(__webpack_exports__, "unstable_batchedUpdates", function() { return react_dom__WEBPACK_IMPORTED_MODULE_0__["unstable_batchedUpdates"]; });
+
+/* eslint-disable import/no-unresolved */
+
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/shallowEqual.js":
+/*!***********************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/shallowEqual.js ***!
+  \***********************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return shallowEqual; });
+function is(x, y) {
+  if (x === y) {
+    return x !== 0 || y !== 0 || 1 / x === 1 / y;
+  } else {
+    return x !== x && y !== y;
+  }
+}
+
+function shallowEqual(objA, objB) {
+  if (is(objA, objB)) return true;
+
+  if (typeof objA !== 'object' || objA === null || typeof objB !== 'object' || objB === null) {
+    return false;
+  }
+
+  var keysA = Object.keys(objA);
+  var keysB = Object.keys(objB);
+  if (keysA.length !== keysB.length) return false;
+
+  for (var i = 0; i < keysA.length; i++) {
+    if (!Object.prototype.hasOwnProperty.call(objB, keysA[i]) || !is(objA[keysA[i]], objB[keysA[i]])) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/useIsomorphicLayoutEffect.js":
+/*!************************************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/useIsomorphicLayoutEffect.js ***!
+  \************************************************************************/
+/*! exports provided: useIsomorphicLayoutEffect */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "useIsomorphicLayoutEffect", function() { return useIsomorphicLayoutEffect; });
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+ // React currently throws a warning when using useLayoutEffect on the server.
+// To get around it, we can conditionally useEffect on the server (no-op) and
+// useLayoutEffect in the browser. We need useLayoutEffect to ensure the store
+// subscription callback always has the selector from the latest render commit
+// available, otherwise a store update may happen between render and the effect,
+// which may cause missed updates; we also must ensure the store subscription
+// is created synchronously, otherwise a store update may occur before the
+// subscription is created and an inconsistent state may be observed
+
+var useIsomorphicLayoutEffect = typeof window !== 'undefined' && typeof window.document !== 'undefined' && typeof window.document.createElement !== 'undefined' ? react__WEBPACK_IMPORTED_MODULE_0__["useLayoutEffect"] : react__WEBPACK_IMPORTED_MODULE_0__["useEffect"];
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/verifyPlainObject.js":
+/*!****************************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/verifyPlainObject.js ***!
+  \****************************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return verifyPlainObject; });
+/* harmony import */ var _isPlainObject__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./isPlainObject */ "./node_modules/react-redux/es/utils/isPlainObject.js");
+/* harmony import */ var _warning__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./warning */ "./node_modules/react-redux/es/utils/warning.js");
+
+
+function verifyPlainObject(value, displayName, methodName) {
+  if (!Object(_isPlainObject__WEBPACK_IMPORTED_MODULE_0__["default"])(value)) {
+    Object(_warning__WEBPACK_IMPORTED_MODULE_1__["default"])(methodName + "() in " + displayName + " must return a plain object. Instead received " + value + ".");
+  }
+}
+
+/***/ }),
+
+/***/ "./node_modules/react-redux/es/utils/warning.js":
+/*!******************************************************!*\
+  !*** ./node_modules/react-redux/es/utils/warning.js ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return warning; });
+/**
+ * Prints a warning in the console if it exists.
+ *
+ * @param {String} message The warning message.
+ * @returns {void}
+ */
+function warning(message) {
+  /* eslint-disable no-console */
+  if (typeof console !== 'undefined' && typeof console.error === 'function') {
+    console.error(message);
+  }
+  /* eslint-enable no-console */
+
+
+  try {
+    // This error was thrown as a convenience so that if you enable
+    // "break on all exceptions" in your console,
+    // it would pause the execution at this line.
+    throw new Error(message);
+    /* eslint-disable no-empty */
+  } catch (e) {}
+  /* eslint-enable no-empty */
+
+}
+
+/***/ }),
+
 /***/ "./node_modules/react-router-dom/esm/react-router-dom.js":
 /*!***************************************************************!*\
   !*** ./node_modules/react-router-dom/esm/react-router-dom.js ***!
@@ -81504,6 +92806,734 @@ var setRef = function setRef(ref, node) {
 
 /***/ }),
 
+/***/ "./node_modules/redux-logger/dist/redux-logger.js":
+/*!********************************************************!*\
+  !*** ./node_modules/redux-logger/dist/redux-logger.js ***!
+  \********************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {!function(e,t){ true?t(exports):undefined}(this,function(e){"use strict";function t(e,t){e.super_=t,e.prototype=Object.create(t.prototype,{constructor:{value:e,enumerable:!1,writable:!0,configurable:!0}})}function r(e,t){Object.defineProperty(this,"kind",{value:e,enumerable:!0}),t&&t.length&&Object.defineProperty(this,"path",{value:t,enumerable:!0})}function n(e,t,r){n.super_.call(this,"E",e),Object.defineProperty(this,"lhs",{value:t,enumerable:!0}),Object.defineProperty(this,"rhs",{value:r,enumerable:!0})}function o(e,t){o.super_.call(this,"N",e),Object.defineProperty(this,"rhs",{value:t,enumerable:!0})}function i(e,t){i.super_.call(this,"D",e),Object.defineProperty(this,"lhs",{value:t,enumerable:!0})}function a(e,t,r){a.super_.call(this,"A",e),Object.defineProperty(this,"index",{value:t,enumerable:!0}),Object.defineProperty(this,"item",{value:r,enumerable:!0})}function f(e,t,r){var n=e.slice((r||t)+1||e.length);return e.length=t<0?e.length+t:t,e.push.apply(e,n),e}function u(e){var t="undefined"==typeof e?"undefined":N(e);return"object"!==t?t:e===Math?"math":null===e?"null":Array.isArray(e)?"array":"[object Date]"===Object.prototype.toString.call(e)?"date":"function"==typeof e.toString&&/^\/.*\//.test(e.toString())?"regexp":"object"}function l(e,t,r,c,s,d,p){s=s||[],p=p||[];var g=s.slice(0);if("undefined"!=typeof d){if(c){if("function"==typeof c&&c(g,d))return;if("object"===("undefined"==typeof c?"undefined":N(c))){if(c.prefilter&&c.prefilter(g,d))return;if(c.normalize){var h=c.normalize(g,d,e,t);h&&(e=h[0],t=h[1])}}}g.push(d)}"regexp"===u(e)&&"regexp"===u(t)&&(e=e.toString(),t=t.toString());var y="undefined"==typeof e?"undefined":N(e),v="undefined"==typeof t?"undefined":N(t),b="undefined"!==y||p&&p[p.length-1].lhs&&p[p.length-1].lhs.hasOwnProperty(d),m="undefined"!==v||p&&p[p.length-1].rhs&&p[p.length-1].rhs.hasOwnProperty(d);if(!b&&m)r(new o(g,t));else if(!m&&b)r(new i(g,e));else if(u(e)!==u(t))r(new n(g,e,t));else if("date"===u(e)&&e-t!==0)r(new n(g,e,t));else if("object"===y&&null!==e&&null!==t)if(p.filter(function(t){return t.lhs===e}).length)e!==t&&r(new n(g,e,t));else{if(p.push({lhs:e,rhs:t}),Array.isArray(e)){var w;e.length;for(w=0;w<e.length;w++)w>=t.length?r(new a(g,w,new i(void 0,e[w]))):l(e[w],t[w],r,c,g,w,p);for(;w<t.length;)r(new a(g,w,new o(void 0,t[w++])))}else{var x=Object.keys(e),S=Object.keys(t);x.forEach(function(n,o){var i=S.indexOf(n);i>=0?(l(e[n],t[n],r,c,g,n,p),S=f(S,i)):l(e[n],void 0,r,c,g,n,p)}),S.forEach(function(e){l(void 0,t[e],r,c,g,e,p)})}p.length=p.length-1}else e!==t&&("number"===y&&isNaN(e)&&isNaN(t)||r(new n(g,e,t)))}function c(e,t,r,n){return n=n||[],l(e,t,function(e){e&&n.push(e)},r),n.length?n:void 0}function s(e,t,r){if(r.path&&r.path.length){var n,o=e[t],i=r.path.length-1;for(n=0;n<i;n++)o=o[r.path[n]];switch(r.kind){case"A":s(o[r.path[n]],r.index,r.item);break;case"D":delete o[r.path[n]];break;case"E":case"N":o[r.path[n]]=r.rhs}}else switch(r.kind){case"A":s(e[t],r.index,r.item);break;case"D":e=f(e,t);break;case"E":case"N":e[t]=r.rhs}return e}function d(e,t,r){if(e&&t&&r&&r.kind){for(var n=e,o=-1,i=r.path?r.path.length-1:0;++o<i;)"undefined"==typeof n[r.path[o]]&&(n[r.path[o]]="number"==typeof r.path[o]?[]:{}),n=n[r.path[o]];switch(r.kind){case"A":s(r.path?n[r.path[o]]:n,r.index,r.item);break;case"D":delete n[r.path[o]];break;case"E":case"N":n[r.path[o]]=r.rhs}}}function p(e,t,r){if(r.path&&r.path.length){var n,o=e[t],i=r.path.length-1;for(n=0;n<i;n++)o=o[r.path[n]];switch(r.kind){case"A":p(o[r.path[n]],r.index,r.item);break;case"D":o[r.path[n]]=r.lhs;break;case"E":o[r.path[n]]=r.lhs;break;case"N":delete o[r.path[n]]}}else switch(r.kind){case"A":p(e[t],r.index,r.item);break;case"D":e[t]=r.lhs;break;case"E":e[t]=r.lhs;break;case"N":e=f(e,t)}return e}function g(e,t,r){if(e&&t&&r&&r.kind){var n,o,i=e;for(o=r.path.length-1,n=0;n<o;n++)"undefined"==typeof i[r.path[n]]&&(i[r.path[n]]={}),i=i[r.path[n]];switch(r.kind){case"A":p(i[r.path[n]],r.index,r.item);break;case"D":i[r.path[n]]=r.lhs;break;case"E":i[r.path[n]]=r.lhs;break;case"N":delete i[r.path[n]]}}}function h(e,t,r){if(e&&t){var n=function(n){r&&!r(e,t,n)||d(e,t,n)};l(e,t,n)}}function y(e){return"color: "+F[e].color+"; font-weight: bold"}function v(e){var t=e.kind,r=e.path,n=e.lhs,o=e.rhs,i=e.index,a=e.item;switch(t){case"E":return[r.join("."),n,"→",o];case"N":return[r.join("."),o];case"D":return[r.join(".")];case"A":return[r.join(".")+"["+i+"]",a];default:return[]}}function b(e,t,r,n){var o=c(e,t);try{n?r.groupCollapsed("diff"):r.group("diff")}catch(e){r.log("diff")}o?o.forEach(function(e){var t=e.kind,n=v(e);r.log.apply(r,["%c "+F[t].text,y(t)].concat(P(n)))}):r.log("—— no diff ——");try{r.groupEnd()}catch(e){r.log("—— diff end —— ")}}function m(e,t,r,n){switch("undefined"==typeof e?"undefined":N(e)){case"object":return"function"==typeof e[n]?e[n].apply(e,P(r)):e[n];case"function":return e(t);default:return e}}function w(e){var t=e.timestamp,r=e.duration;return function(e,n,o){var i=["action"];return i.push("%c"+String(e.type)),t&&i.push("%c@ "+n),r&&i.push("%c(in "+o.toFixed(2)+" ms)"),i.join(" ")}}function x(e,t){var r=t.logger,n=t.actionTransformer,o=t.titleFormatter,i=void 0===o?w(t):o,a=t.collapsed,f=t.colors,u=t.level,l=t.diff,c="undefined"==typeof t.titleFormatter;e.forEach(function(o,s){var d=o.started,p=o.startedTime,g=o.action,h=o.prevState,y=o.error,v=o.took,w=o.nextState,x=e[s+1];x&&(w=x.prevState,v=x.started-d);var S=n(g),k="function"==typeof a?a(function(){return w},g,o):a,j=D(p),E=f.title?"color: "+f.title(S)+";":"",A=["color: gray; font-weight: lighter;"];A.push(E),t.timestamp&&A.push("color: gray; font-weight: lighter;"),t.duration&&A.push("color: gray; font-weight: lighter;");var O=i(S,j,v);try{k?f.title&&c?r.groupCollapsed.apply(r,["%c "+O].concat(A)):r.groupCollapsed(O):f.title&&c?r.group.apply(r,["%c "+O].concat(A)):r.group(O)}catch(e){r.log(O)}var N=m(u,S,[h],"prevState"),P=m(u,S,[S],"action"),C=m(u,S,[y,h],"error"),F=m(u,S,[w],"nextState");if(N)if(f.prevState){var L="color: "+f.prevState(h)+"; font-weight: bold";r[N]("%c prev state",L,h)}else r[N]("prev state",h);if(P)if(f.action){var T="color: "+f.action(S)+"; font-weight: bold";r[P]("%c action    ",T,S)}else r[P]("action    ",S);if(y&&C)if(f.error){var M="color: "+f.error(y,h)+"; font-weight: bold;";r[C]("%c error     ",M,y)}else r[C]("error     ",y);if(F)if(f.nextState){var _="color: "+f.nextState(w)+"; font-weight: bold";r[F]("%c next state",_,w)}else r[F]("next state",w);l&&b(h,w,r,k);try{r.groupEnd()}catch(e){r.log("—— log end ——")}})}function S(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},t=Object.assign({},L,e),r=t.logger,n=t.stateTransformer,o=t.errorTransformer,i=t.predicate,a=t.logErrors,f=t.diffPredicate;if("undefined"==typeof r)return function(){return function(e){return function(t){return e(t)}}};if(e.getState&&e.dispatch)return console.error("[redux-logger] redux-logger not installed. Make sure to pass logger instance as middleware:\n// Logger with default options\nimport { logger } from 'redux-logger'\nconst store = createStore(\n  reducer,\n  applyMiddleware(logger)\n)\n// Or you can create your own logger with custom options http://bit.ly/redux-logger-options\nimport createLogger from 'redux-logger'\nconst logger = createLogger({\n  // ...options\n});\nconst store = createStore(\n  reducer,\n  applyMiddleware(logger)\n)\n"),function(){return function(e){return function(t){return e(t)}}};var u=[];return function(e){var r=e.getState;return function(e){return function(l){if("function"==typeof i&&!i(r,l))return e(l);var c={};u.push(c),c.started=O.now(),c.startedTime=new Date,c.prevState=n(r()),c.action=l;var s=void 0;if(a)try{s=e(l)}catch(e){c.error=o(e)}else s=e(l);c.took=O.now()-c.started,c.nextState=n(r());var d=t.diff&&"function"==typeof f?f(r,l):t.diff;if(x(u,Object.assign({},t,{diff:d})),u.length=0,c.error)throw c.error;return s}}}}var k,j,E=function(e,t){return new Array(t+1).join(e)},A=function(e,t){return E("0",t-e.toString().length)+e},D=function(e){return A(e.getHours(),2)+":"+A(e.getMinutes(),2)+":"+A(e.getSeconds(),2)+"."+A(e.getMilliseconds(),3)},O="undefined"!=typeof performance&&null!==performance&&"function"==typeof performance.now?performance:Date,N="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(e){return typeof e}:function(e){return e&&"function"==typeof Symbol&&e.constructor===Symbol&&e!==Symbol.prototype?"symbol":typeof e},P=function(e){if(Array.isArray(e)){for(var t=0,r=Array(e.length);t<e.length;t++)r[t]=e[t];return r}return Array.from(e)},C=[];k="object"===("undefined"==typeof global?"undefined":N(global))&&global?global:"undefined"!=typeof window?window:{},j=k.DeepDiff,j&&C.push(function(){"undefined"!=typeof j&&k.DeepDiff===c&&(k.DeepDiff=j,j=void 0)}),t(n,r),t(o,r),t(i,r),t(a,r),Object.defineProperties(c,{diff:{value:c,enumerable:!0},observableDiff:{value:l,enumerable:!0},applyDiff:{value:h,enumerable:!0},applyChange:{value:d,enumerable:!0},revertChange:{value:g,enumerable:!0},isConflict:{value:function(){return"undefined"!=typeof j},enumerable:!0},noConflict:{value:function(){return C&&(C.forEach(function(e){e()}),C=null),c},enumerable:!0}});var F={E:{color:"#2196F3",text:"CHANGED:"},N:{color:"#4CAF50",text:"ADDED:"},D:{color:"#F44336",text:"DELETED:"},A:{color:"#2196F3",text:"ARRAY:"}},L={level:"log",logger:console,logErrors:!0,collapsed:void 0,predicate:void 0,duration:!1,timestamp:!0,stateTransformer:function(e){return e},actionTransformer:function(e){return e},errorTransformer:function(e){return e},colors:{title:function(){return"inherit"},prevState:function(){return"#9E9E9E"},action:function(){return"#03A9F4"},nextState:function(){return"#4CAF50"},error:function(){return"#F20404"}},diff:!1,diffPredicate:void 0,transformer:void 0},T=function(){var e=arguments.length>0&&void 0!==arguments[0]?arguments[0]:{},t=e.dispatch,r=e.getState;return"function"==typeof t||"function"==typeof r?S()({dispatch:t,getState:r}):void console.error("\n[redux-logger v3] BREAKING CHANGE\n[redux-logger v3] Since 3.0.0 redux-logger exports by default logger with default settings.\n[redux-logger v3] Change\n[redux-logger v3] import createLogger from 'redux-logger'\n[redux-logger v3] to\n[redux-logger v3] import { createLogger } from 'redux-logger'\n")};e.defaults=L,e.createLogger=S,e.logger=T,e.default=T,Object.defineProperty(e,"__esModule",{value:!0})});
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js")))
+
+/***/ }),
+
+/***/ "./node_modules/redux-thunk/es/index.js":
+/*!**********************************************!*\
+  !*** ./node_modules/redux-thunk/es/index.js ***!
+  \**********************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+function createThunkMiddleware(extraArgument) {
+  return function (_ref) {
+    var dispatch = _ref.dispatch,
+        getState = _ref.getState;
+    return function (next) {
+      return function (action) {
+        if (typeof action === 'function') {
+          return action(dispatch, getState, extraArgument);
+        }
+
+        return next(action);
+      };
+    };
+  };
+}
+
+var thunk = createThunkMiddleware();
+thunk.withExtraArgument = createThunkMiddleware;
+
+/* harmony default export */ __webpack_exports__["default"] = (thunk);
+
+/***/ }),
+
+/***/ "./node_modules/redux/es/redux.js":
+/*!****************************************!*\
+  !*** ./node_modules/redux/es/redux.js ***!
+  \****************************************/
+/*! exports provided: __DO_NOT_USE__ActionTypes, applyMiddleware, bindActionCreators, combineReducers, compose, createStore */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "__DO_NOT_USE__ActionTypes", function() { return ActionTypes; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "applyMiddleware", function() { return applyMiddleware; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "bindActionCreators", function() { return bindActionCreators; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "combineReducers", function() { return combineReducers; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "compose", function() { return compose; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "createStore", function() { return createStore; });
+/* harmony import */ var symbol_observable__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! symbol-observable */ "./node_modules/symbol-observable/es/index.js");
+
+
+/**
+ * These are private action types reserved by Redux.
+ * For any unknown actions, you must return the current state.
+ * If the current state is undefined, you must return the initial state.
+ * Do not reference these action types directly in your code.
+ */
+var randomString = function randomString() {
+  return Math.random().toString(36).substring(7).split('').join('.');
+};
+
+var ActionTypes = {
+  INIT: "@@redux/INIT" + randomString(),
+  REPLACE: "@@redux/REPLACE" + randomString(),
+  PROBE_UNKNOWN_ACTION: function PROBE_UNKNOWN_ACTION() {
+    return "@@redux/PROBE_UNKNOWN_ACTION" + randomString();
+  }
+};
+
+/**
+ * @param {any} obj The object to inspect.
+ * @returns {boolean} True if the argument appears to be a plain object.
+ */
+function isPlainObject(obj) {
+  if (typeof obj !== 'object' || obj === null) return false;
+  var proto = obj;
+
+  while (Object.getPrototypeOf(proto) !== null) {
+    proto = Object.getPrototypeOf(proto);
+  }
+
+  return Object.getPrototypeOf(obj) === proto;
+}
+
+/**
+ * Creates a Redux store that holds the state tree.
+ * The only way to change the data in the store is to call `dispatch()` on it.
+ *
+ * There should only be a single store in your app. To specify how different
+ * parts of the state tree respond to actions, you may combine several reducers
+ * into a single reducer function by using `combineReducers`.
+ *
+ * @param {Function} reducer A function that returns the next state tree, given
+ * the current state tree and the action to handle.
+ *
+ * @param {any} [preloadedState] The initial state. You may optionally specify it
+ * to hydrate the state from the server in universal apps, or to restore a
+ * previously serialized user session.
+ * If you use `combineReducers` to produce the root reducer function, this must be
+ * an object with the same shape as `combineReducers` keys.
+ *
+ * @param {Function} [enhancer] The store enhancer. You may optionally specify it
+ * to enhance the store with third-party capabilities such as middleware,
+ * time travel, persistence, etc. The only store enhancer that ships with Redux
+ * is `applyMiddleware()`.
+ *
+ * @returns {Store} A Redux store that lets you read the state, dispatch actions
+ * and subscribe to changes.
+ */
+
+function createStore(reducer, preloadedState, enhancer) {
+  var _ref2;
+
+  if (typeof preloadedState === 'function' && typeof enhancer === 'function' || typeof enhancer === 'function' && typeof arguments[3] === 'function') {
+    throw new Error('It looks like you are passing several store enhancers to ' + 'createStore(). This is not supported. Instead, compose them ' + 'together to a single function.');
+  }
+
+  if (typeof preloadedState === 'function' && typeof enhancer === 'undefined') {
+    enhancer = preloadedState;
+    preloadedState = undefined;
+  }
+
+  if (typeof enhancer !== 'undefined') {
+    if (typeof enhancer !== 'function') {
+      throw new Error('Expected the enhancer to be a function.');
+    }
+
+    return enhancer(createStore)(reducer, preloadedState);
+  }
+
+  if (typeof reducer !== 'function') {
+    throw new Error('Expected the reducer to be a function.');
+  }
+
+  var currentReducer = reducer;
+  var currentState = preloadedState;
+  var currentListeners = [];
+  var nextListeners = currentListeners;
+  var isDispatching = false;
+  /**
+   * This makes a shallow copy of currentListeners so we can use
+   * nextListeners as a temporary list while dispatching.
+   *
+   * This prevents any bugs around consumers calling
+   * subscribe/unsubscribe in the middle of a dispatch.
+   */
+
+  function ensureCanMutateNextListeners() {
+    if (nextListeners === currentListeners) {
+      nextListeners = currentListeners.slice();
+    }
+  }
+  /**
+   * Reads the state tree managed by the store.
+   *
+   * @returns {any} The current state tree of your application.
+   */
+
+
+  function getState() {
+    if (isDispatching) {
+      throw new Error('You may not call store.getState() while the reducer is executing. ' + 'The reducer has already received the state as an argument. ' + 'Pass it down from the top reducer instead of reading it from the store.');
+    }
+
+    return currentState;
+  }
+  /**
+   * Adds a change listener. It will be called any time an action is dispatched,
+   * and some part of the state tree may potentially have changed. You may then
+   * call `getState()` to read the current state tree inside the callback.
+   *
+   * You may call `dispatch()` from a change listener, with the following
+   * caveats:
+   *
+   * 1. The subscriptions are snapshotted just before every `dispatch()` call.
+   * If you subscribe or unsubscribe while the listeners are being invoked, this
+   * will not have any effect on the `dispatch()` that is currently in progress.
+   * However, the next `dispatch()` call, whether nested or not, will use a more
+   * recent snapshot of the subscription list.
+   *
+   * 2. The listener should not expect to see all state changes, as the state
+   * might have been updated multiple times during a nested `dispatch()` before
+   * the listener is called. It is, however, guaranteed that all subscribers
+   * registered before the `dispatch()` started will be called with the latest
+   * state by the time it exits.
+   *
+   * @param {Function} listener A callback to be invoked on every dispatch.
+   * @returns {Function} A function to remove this change listener.
+   */
+
+
+  function subscribe(listener) {
+    if (typeof listener !== 'function') {
+      throw new Error('Expected the listener to be a function.');
+    }
+
+    if (isDispatching) {
+      throw new Error('You may not call store.subscribe() while the reducer is executing. ' + 'If you would like to be notified after the store has been updated, subscribe from a ' + 'component and invoke store.getState() in the callback to access the latest state. ' + 'See https://redux.js.org/api-reference/store#subscribelistener for more details.');
+    }
+
+    var isSubscribed = true;
+    ensureCanMutateNextListeners();
+    nextListeners.push(listener);
+    return function unsubscribe() {
+      if (!isSubscribed) {
+        return;
+      }
+
+      if (isDispatching) {
+        throw new Error('You may not unsubscribe from a store listener while the reducer is executing. ' + 'See https://redux.js.org/api-reference/store#subscribelistener for more details.');
+      }
+
+      isSubscribed = false;
+      ensureCanMutateNextListeners();
+      var index = nextListeners.indexOf(listener);
+      nextListeners.splice(index, 1);
+      currentListeners = null;
+    };
+  }
+  /**
+   * Dispatches an action. It is the only way to trigger a state change.
+   *
+   * The `reducer` function, used to create the store, will be called with the
+   * current state tree and the given `action`. Its return value will
+   * be considered the **next** state of the tree, and the change listeners
+   * will be notified.
+   *
+   * The base implementation only supports plain object actions. If you want to
+   * dispatch a Promise, an Observable, a thunk, or something else, you need to
+   * wrap your store creating function into the corresponding middleware. For
+   * example, see the documentation for the `redux-thunk` package. Even the
+   * middleware will eventually dispatch plain object actions using this method.
+   *
+   * @param {Object} action A plain object representing “what changed”. It is
+   * a good idea to keep actions serializable so you can record and replay user
+   * sessions, or use the time travelling `redux-devtools`. An action must have
+   * a `type` property which may not be `undefined`. It is a good idea to use
+   * string constants for action types.
+   *
+   * @returns {Object} For convenience, the same action object you dispatched.
+   *
+   * Note that, if you use a custom middleware, it may wrap `dispatch()` to
+   * return something else (for example, a Promise you can await).
+   */
+
+
+  function dispatch(action) {
+    if (!isPlainObject(action)) {
+      throw new Error('Actions must be plain objects. ' + 'Use custom middleware for async actions.');
+    }
+
+    if (typeof action.type === 'undefined') {
+      throw new Error('Actions may not have an undefined "type" property. ' + 'Have you misspelled a constant?');
+    }
+
+    if (isDispatching) {
+      throw new Error('Reducers may not dispatch actions.');
+    }
+
+    try {
+      isDispatching = true;
+      currentState = currentReducer(currentState, action);
+    } finally {
+      isDispatching = false;
+    }
+
+    var listeners = currentListeners = nextListeners;
+
+    for (var i = 0; i < listeners.length; i++) {
+      var listener = listeners[i];
+      listener();
+    }
+
+    return action;
+  }
+  /**
+   * Replaces the reducer currently used by the store to calculate the state.
+   *
+   * You might need this if your app implements code splitting and you want to
+   * load some of the reducers dynamically. You might also need this if you
+   * implement a hot reloading mechanism for Redux.
+   *
+   * @param {Function} nextReducer The reducer for the store to use instead.
+   * @returns {void}
+   */
+
+
+  function replaceReducer(nextReducer) {
+    if (typeof nextReducer !== 'function') {
+      throw new Error('Expected the nextReducer to be a function.');
+    }
+
+    currentReducer = nextReducer; // This action has a similiar effect to ActionTypes.INIT.
+    // Any reducers that existed in both the new and old rootReducer
+    // will receive the previous state. This effectively populates
+    // the new state tree with any relevant data from the old one.
+
+    dispatch({
+      type: ActionTypes.REPLACE
+    });
+  }
+  /**
+   * Interoperability point for observable/reactive libraries.
+   * @returns {observable} A minimal observable of state changes.
+   * For more information, see the observable proposal:
+   * https://github.com/tc39/proposal-observable
+   */
+
+
+  function observable() {
+    var _ref;
+
+    var outerSubscribe = subscribe;
+    return _ref = {
+      /**
+       * The minimal observable subscription method.
+       * @param {Object} observer Any object that can be used as an observer.
+       * The observer object should have a `next` method.
+       * @returns {subscription} An object with an `unsubscribe` method that can
+       * be used to unsubscribe the observable from the store, and prevent further
+       * emission of values from the observable.
+       */
+      subscribe: function subscribe(observer) {
+        if (typeof observer !== 'object' || observer === null) {
+          throw new TypeError('Expected the observer to be an object.');
+        }
+
+        function observeState() {
+          if (observer.next) {
+            observer.next(getState());
+          }
+        }
+
+        observeState();
+        var unsubscribe = outerSubscribe(observeState);
+        return {
+          unsubscribe: unsubscribe
+        };
+      }
+    }, _ref[symbol_observable__WEBPACK_IMPORTED_MODULE_0__["default"]] = function () {
+      return this;
+    }, _ref;
+  } // When a store is created, an "INIT" action is dispatched so that every
+  // reducer returns their initial state. This effectively populates
+  // the initial state tree.
+
+
+  dispatch({
+    type: ActionTypes.INIT
+  });
+  return _ref2 = {
+    dispatch: dispatch,
+    subscribe: subscribe,
+    getState: getState,
+    replaceReducer: replaceReducer
+  }, _ref2[symbol_observable__WEBPACK_IMPORTED_MODULE_0__["default"]] = observable, _ref2;
+}
+
+/**
+ * Prints a warning in the console if it exists.
+ *
+ * @param {String} message The warning message.
+ * @returns {void}
+ */
+function warning(message) {
+  /* eslint-disable no-console */
+  if (typeof console !== 'undefined' && typeof console.error === 'function') {
+    console.error(message);
+  }
+  /* eslint-enable no-console */
+
+
+  try {
+    // This error was thrown as a convenience so that if you enable
+    // "break on all exceptions" in your console,
+    // it would pause the execution at this line.
+    throw new Error(message);
+  } catch (e) {} // eslint-disable-line no-empty
+
+}
+
+function getUndefinedStateErrorMessage(key, action) {
+  var actionType = action && action.type;
+  var actionDescription = actionType && "action \"" + String(actionType) + "\"" || 'an action';
+  return "Given " + actionDescription + ", reducer \"" + key + "\" returned undefined. " + "To ignore an action, you must explicitly return the previous state. " + "If you want this reducer to hold no value, you can return null instead of undefined.";
+}
+
+function getUnexpectedStateShapeWarningMessage(inputState, reducers, action, unexpectedKeyCache) {
+  var reducerKeys = Object.keys(reducers);
+  var argumentName = action && action.type === ActionTypes.INIT ? 'preloadedState argument passed to createStore' : 'previous state received by the reducer';
+
+  if (reducerKeys.length === 0) {
+    return 'Store does not have a valid reducer. Make sure the argument passed ' + 'to combineReducers is an object whose values are reducers.';
+  }
+
+  if (!isPlainObject(inputState)) {
+    return "The " + argumentName + " has unexpected type of \"" + {}.toString.call(inputState).match(/\s([a-z|A-Z]+)/)[1] + "\". Expected argument to be an object with the following " + ("keys: \"" + reducerKeys.join('", "') + "\"");
+  }
+
+  var unexpectedKeys = Object.keys(inputState).filter(function (key) {
+    return !reducers.hasOwnProperty(key) && !unexpectedKeyCache[key];
+  });
+  unexpectedKeys.forEach(function (key) {
+    unexpectedKeyCache[key] = true;
+  });
+  if (action && action.type === ActionTypes.REPLACE) return;
+
+  if (unexpectedKeys.length > 0) {
+    return "Unexpected " + (unexpectedKeys.length > 1 ? 'keys' : 'key') + " " + ("\"" + unexpectedKeys.join('", "') + "\" found in " + argumentName + ". ") + "Expected to find one of the known reducer keys instead: " + ("\"" + reducerKeys.join('", "') + "\". Unexpected keys will be ignored.");
+  }
+}
+
+function assertReducerShape(reducers) {
+  Object.keys(reducers).forEach(function (key) {
+    var reducer = reducers[key];
+    var initialState = reducer(undefined, {
+      type: ActionTypes.INIT
+    });
+
+    if (typeof initialState === 'undefined') {
+      throw new Error("Reducer \"" + key + "\" returned undefined during initialization. " + "If the state passed to the reducer is undefined, you must " + "explicitly return the initial state. The initial state may " + "not be undefined. If you don't want to set a value for this reducer, " + "you can use null instead of undefined.");
+    }
+
+    if (typeof reducer(undefined, {
+      type: ActionTypes.PROBE_UNKNOWN_ACTION()
+    }) === 'undefined') {
+      throw new Error("Reducer \"" + key + "\" returned undefined when probed with a random type. " + ("Don't try to handle " + ActionTypes.INIT + " or other actions in \"redux/*\" ") + "namespace. They are considered private. Instead, you must return the " + "current state for any unknown actions, unless it is undefined, " + "in which case you must return the initial state, regardless of the " + "action type. The initial state may not be undefined, but can be null.");
+    }
+  });
+}
+/**
+ * Turns an object whose values are different reducer functions, into a single
+ * reducer function. It will call every child reducer, and gather their results
+ * into a single state object, whose keys correspond to the keys of the passed
+ * reducer functions.
+ *
+ * @param {Object} reducers An object whose values correspond to different
+ * reducer functions that need to be combined into one. One handy way to obtain
+ * it is to use ES6 `import * as reducers` syntax. The reducers may never return
+ * undefined for any action. Instead, they should return their initial state
+ * if the state passed to them was undefined, and the current state for any
+ * unrecognized action.
+ *
+ * @returns {Function} A reducer function that invokes every reducer inside the
+ * passed object, and builds a state object with the same shape.
+ */
+
+
+function combineReducers(reducers) {
+  var reducerKeys = Object.keys(reducers);
+  var finalReducers = {};
+
+  for (var i = 0; i < reducerKeys.length; i++) {
+    var key = reducerKeys[i];
+
+    if (true) {
+      if (typeof reducers[key] === 'undefined') {
+        warning("No reducer provided for key \"" + key + "\"");
+      }
+    }
+
+    if (typeof reducers[key] === 'function') {
+      finalReducers[key] = reducers[key];
+    }
+  }
+
+  var finalReducerKeys = Object.keys(finalReducers); // This is used to make sure we don't warn about the same
+  // keys multiple times.
+
+  var unexpectedKeyCache;
+
+  if (true) {
+    unexpectedKeyCache = {};
+  }
+
+  var shapeAssertionError;
+
+  try {
+    assertReducerShape(finalReducers);
+  } catch (e) {
+    shapeAssertionError = e;
+  }
+
+  return function combination(state, action) {
+    if (state === void 0) {
+      state = {};
+    }
+
+    if (shapeAssertionError) {
+      throw shapeAssertionError;
+    }
+
+    if (true) {
+      var warningMessage = getUnexpectedStateShapeWarningMessage(state, finalReducers, action, unexpectedKeyCache);
+
+      if (warningMessage) {
+        warning(warningMessage);
+      }
+    }
+
+    var hasChanged = false;
+    var nextState = {};
+
+    for (var _i = 0; _i < finalReducerKeys.length; _i++) {
+      var _key = finalReducerKeys[_i];
+      var reducer = finalReducers[_key];
+      var previousStateForKey = state[_key];
+      var nextStateForKey = reducer(previousStateForKey, action);
+
+      if (typeof nextStateForKey === 'undefined') {
+        var errorMessage = getUndefinedStateErrorMessage(_key, action);
+        throw new Error(errorMessage);
+      }
+
+      nextState[_key] = nextStateForKey;
+      hasChanged = hasChanged || nextStateForKey !== previousStateForKey;
+    }
+
+    hasChanged = hasChanged || finalReducerKeys.length !== Object.keys(state).length;
+    return hasChanged ? nextState : state;
+  };
+}
+
+function bindActionCreator(actionCreator, dispatch) {
+  return function () {
+    return dispatch(actionCreator.apply(this, arguments));
+  };
+}
+/**
+ * Turns an object whose values are action creators, into an object with the
+ * same keys, but with every function wrapped into a `dispatch` call so they
+ * may be invoked directly. This is just a convenience method, as you can call
+ * `store.dispatch(MyActionCreators.doSomething())` yourself just fine.
+ *
+ * For convenience, you can also pass an action creator as the first argument,
+ * and get a dispatch wrapped function in return.
+ *
+ * @param {Function|Object} actionCreators An object whose values are action
+ * creator functions. One handy way to obtain it is to use ES6 `import * as`
+ * syntax. You may also pass a single function.
+ *
+ * @param {Function} dispatch The `dispatch` function available on your Redux
+ * store.
+ *
+ * @returns {Function|Object} The object mimicking the original object, but with
+ * every action creator wrapped into the `dispatch` call. If you passed a
+ * function as `actionCreators`, the return value will also be a single
+ * function.
+ */
+
+
+function bindActionCreators(actionCreators, dispatch) {
+  if (typeof actionCreators === 'function') {
+    return bindActionCreator(actionCreators, dispatch);
+  }
+
+  if (typeof actionCreators !== 'object' || actionCreators === null) {
+    throw new Error("bindActionCreators expected an object or a function, instead received " + (actionCreators === null ? 'null' : typeof actionCreators) + ". " + "Did you write \"import ActionCreators from\" instead of \"import * as ActionCreators from\"?");
+  }
+
+  var boundActionCreators = {};
+
+  for (var key in actionCreators) {
+    var actionCreator = actionCreators[key];
+
+    if (typeof actionCreator === 'function') {
+      boundActionCreators[key] = bindActionCreator(actionCreator, dispatch);
+    }
+  }
+
+  return boundActionCreators;
+}
+
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+function ownKeys(object, enumerableOnly) {
+  var keys = Object.keys(object);
+
+  if (Object.getOwnPropertySymbols) {
+    keys.push.apply(keys, Object.getOwnPropertySymbols(object));
+  }
+
+  if (enumerableOnly) keys = keys.filter(function (sym) {
+    return Object.getOwnPropertyDescriptor(object, sym).enumerable;
+  });
+  return keys;
+}
+
+function _objectSpread2(target) {
+  for (var i = 1; i < arguments.length; i++) {
+    var source = arguments[i] != null ? arguments[i] : {};
+
+    if (i % 2) {
+      ownKeys(source, true).forEach(function (key) {
+        _defineProperty(target, key, source[key]);
+      });
+    } else if (Object.getOwnPropertyDescriptors) {
+      Object.defineProperties(target, Object.getOwnPropertyDescriptors(source));
+    } else {
+      ownKeys(source).forEach(function (key) {
+        Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key));
+      });
+    }
+  }
+
+  return target;
+}
+
+/**
+ * Composes single-argument functions from right to left. The rightmost
+ * function can take multiple arguments as it provides the signature for
+ * the resulting composite function.
+ *
+ * @param {...Function} funcs The functions to compose.
+ * @returns {Function} A function obtained by composing the argument functions
+ * from right to left. For example, compose(f, g, h) is identical to doing
+ * (...args) => f(g(h(...args))).
+ */
+function compose() {
+  for (var _len = arguments.length, funcs = new Array(_len), _key = 0; _key < _len; _key++) {
+    funcs[_key] = arguments[_key];
+  }
+
+  if (funcs.length === 0) {
+    return function (arg) {
+      return arg;
+    };
+  }
+
+  if (funcs.length === 1) {
+    return funcs[0];
+  }
+
+  return funcs.reduce(function (a, b) {
+    return function () {
+      return a(b.apply(void 0, arguments));
+    };
+  });
+}
+
+/**
+ * Creates a store enhancer that applies middleware to the dispatch method
+ * of the Redux store. This is handy for a variety of tasks, such as expressing
+ * asynchronous actions in a concise manner, or logging every action payload.
+ *
+ * See `redux-thunk` package as an example of the Redux middleware.
+ *
+ * Because middleware is potentially asynchronous, this should be the first
+ * store enhancer in the composition chain.
+ *
+ * Note that each middleware will be given the `dispatch` and `getState` functions
+ * as named arguments.
+ *
+ * @param {...Function} middlewares The middleware chain to be applied.
+ * @returns {Function} A store enhancer applying the middleware.
+ */
+
+function applyMiddleware() {
+  for (var _len = arguments.length, middlewares = new Array(_len), _key = 0; _key < _len; _key++) {
+    middlewares[_key] = arguments[_key];
+  }
+
+  return function (createStore) {
+    return function () {
+      var store = createStore.apply(void 0, arguments);
+
+      var _dispatch = function dispatch() {
+        throw new Error('Dispatching while constructing your middleware is not allowed. ' + 'Other middleware would not be applied to this dispatch.');
+      };
+
+      var middlewareAPI = {
+        getState: store.getState,
+        dispatch: function dispatch() {
+          return _dispatch.apply(void 0, arguments);
+        }
+      };
+      var chain = middlewares.map(function (middleware) {
+        return middleware(middlewareAPI);
+      });
+      _dispatch = compose.apply(void 0, chain)(store.dispatch);
+      return _objectSpread2({}, store, {
+        dispatch: _dispatch
+      });
+    };
+  };
+}
+
+/*
+ * This is a dummy function to check if the function name has been altered by minification.
+ * If the function has been minified and NODE_ENV !== 'production', warn the user.
+ */
+
+function isCrushed() {}
+
+if ( true && typeof isCrushed.name === 'string' && isCrushed.name !== 'isCrushed') {
+  warning('You are currently using minified code outside of NODE_ENV === "production". ' + 'This means that you are running a slower development build of Redux. ' + 'You can use loose-envify (https://github.com/zertosh/loose-envify) for browserify ' + 'or setting mode to production in webpack (https://webpack.js.org/concepts/mode/) ' + 'to ensure you have the correct code for your production build.');
+}
+
+
+
+
+/***/ }),
+
 /***/ "./node_modules/regexp.prototype.flags/implementation.js":
 /*!***************************************************************!*\
   !*** ./node_modules/regexp.prototype.flags/implementation.js ***!
@@ -82999,6 +95029,31 @@ if (false) {} else {
 
 /***/ }),
 
+/***/ "./node_modules/shallow-compare/es/index.js":
+/*!**************************************************!*\
+  !*** ./node_modules/shallow-compare/es/index.js ***!
+  \**************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+// Pulled from react-compat
+// https://github.com/developit/preact-compat/blob/7c5de00e7c85e2ffd011bf3af02899b63f699d3a/src/index.js#L349
+function shallowDiffers(a, b) {
+  for (var i in a) {
+    if (!(i in b)) return true;
+  }for (var _i in b) {
+    if (a[_i] !== b[_i]) return true;
+  }return false;
+}
+
+/* harmony default export */ __webpack_exports__["default"] = (function (instance, nextProps, nextState) {
+  return shallowDiffers(instance.props, nextProps) || shallowDiffers(instance.state, nextState);
+});
+
+/***/ }),
+
 /***/ "./node_modules/style-loader/lib/addStyles.js":
 /*!****************************************************!*\
   !*** ./node_modules/style-loader/lib/addStyles.js ***!
@@ -83508,6 +95563,69 @@ module.exports = function (css) {
 
 /***/ }),
 
+/***/ "./node_modules/symbol-observable/es/index.js":
+/*!****************************************************!*\
+  !*** ./node_modules/symbol-observable/es/index.js ***!
+  \****************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* WEBPACK VAR INJECTION */(function(global, module) {/* harmony import */ var _ponyfill_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./ponyfill.js */ "./node_modules/symbol-observable/es/ponyfill.js");
+/* global window */
+
+
+var root;
+
+if (typeof self !== 'undefined') {
+  root = self;
+} else if (typeof window !== 'undefined') {
+  root = window;
+} else if (typeof global !== 'undefined') {
+  root = global;
+} else if (true) {
+  root = module;
+} else {}
+
+var result = Object(_ponyfill_js__WEBPACK_IMPORTED_MODULE_0__["default"])(root);
+/* harmony default export */ __webpack_exports__["default"] = (result);
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(/*! ./../../webpack/buildin/global.js */ "./node_modules/webpack/buildin/global.js"), __webpack_require__(/*! ./../../webpack/buildin/harmony-module.js */ "./node_modules/webpack/buildin/harmony-module.js")(module)))
+
+/***/ }),
+
+/***/ "./node_modules/symbol-observable/es/ponyfill.js":
+/*!*******************************************************!*\
+  !*** ./node_modules/symbol-observable/es/ponyfill.js ***!
+  \*******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "default", function() { return symbolObservablePonyfill; });
+function symbolObservablePonyfill(root) {
+	var result;
+	var Symbol = root.Symbol;
+
+	if (typeof Symbol === 'function') {
+		if (Symbol.observable) {
+			result = Symbol.observable;
+		} else {
+			result = Symbol('observable');
+			Symbol.observable = result;
+		}
+	} else {
+		result = '@@observable';
+	}
+
+	return result;
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/tiny-invariant/dist/tiny-invariant.esm.js":
 /*!****************************************************************!*\
   !*** ./node_modules/tiny-invariant/dist/tiny-invariant.esm.js ***!
@@ -83721,6 +95839,41 @@ module.exports = g;
 
 /***/ }),
 
+/***/ "./node_modules/webpack/buildin/harmony-module.js":
+/*!*******************************************!*\
+  !*** (webpack)/buildin/harmony-module.js ***!
+  \*******************************************/
+/*! no static exports found */
+/***/ (function(module, exports) {
+
+module.exports = function(originalModule) {
+	if (!originalModule.webpackPolyfill) {
+		var module = Object.create(originalModule);
+		// module.parent = undefined by default
+		if (!module.children) module.children = [];
+		Object.defineProperty(module, "loaded", {
+			enumerable: true,
+			get: function() {
+				return module.l;
+			}
+		});
+		Object.defineProperty(module, "id", {
+			enumerable: true,
+			get: function() {
+				return module.i;
+			}
+		});
+		Object.defineProperty(module, "exports", {
+			enumerable: true
+		});
+		module.webpackPolyfill = 1;
+	}
+	return module;
+};
+
+
+/***/ }),
+
 /***/ "./node_modules/webpack/buildin/module.js":
 /*!***********************************!*\
   !*** (webpack)/buildin/module.js ***!
@@ -83891,14 +96044,21 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
 /* harmony import */ var _MainComponent__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./MainComponent */ "./resources/js/components/MainComponent.js");
 /* harmony import */ var react_router_dom__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-router-dom */ "./node_modules/react-router-dom/esm/react-router-dom.js");
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
+/* harmony import */ var _redux_configureStore__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../../redux/configureStore */ "./resources/redux/configureStore.js");
 
 
 
+
+
+var store = Object(_redux_configureStore__WEBPACK_IMPORTED_MODULE_4__["ConfigureStore"])();
 
 function App() {
-  return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["BrowserRouter"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+  return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux__WEBPACK_IMPORTED_MODULE_3__["Provider"], {
+    store: store
+  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["BrowserRouter"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
     className: "App"
-  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MainComponent__WEBPACK_IMPORTED_MODULE_1__["default"], null)));
+  }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_MainComponent__WEBPACK_IMPORTED_MODULE_1__["default"], null))));
 }
 
 /* harmony default export */ __webpack_exports__["default"] = (App);
@@ -84062,7 +96222,8 @@ var Header = /*#__PURE__*/function (_React$Component) {
     key: "handleLogin",
     value: function handleLogin(event) {
       this.toggleLoginModal();
-      alert('Username: ' + this.username.value + ' Password: ' + this.password.value);
+      console.log('Username: ' + this.username.value + ' Password: ' + this.password.value);
+      this.props.processLogin(this.username.value, this.password.value);
       event.preventDefault();
     }
   }, {
@@ -84096,7 +96257,7 @@ var Header = /*#__PURE__*/function (_React$Component) {
         className: "nav-link",
         to: "/problems"
       }, "\u0417\u0430\u0434\u0430\u0447\u0438"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["DropdownMenu"], {
-        left: true
+        left: "true"
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["DropdownItem"], null, "\u0413\u0435\u043E\u043C\u0435\u0442\u0440\u0438\u044F"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["DropdownItem"], null, "\u0410\u043B\u0433\u0435\u0431\u0440\u0430"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["DropdownItem"], null, "\u0412\u044B\u0441\u0448\u0430\u044F \u043C\u0430\u0442\u0435\u043C\u0430\u0442\u0438\u043A\u0430"))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["NavItem"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["NavLink"], {
         className: "nav-link",
         to: "/courses"
@@ -84112,7 +96273,15 @@ var Header = /*#__PURE__*/function (_React$Component) {
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["NavItem"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Button"], {
         outline: true,
         onClick: this.toggleLoginModal
-      }, "\u0412\u043E\u0439\u0442\u0438"))))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Jumbotron"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+      }, "\u0412\u043E\u0439\u0442\u0438"))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Nav"], {
+        className: "ml-auto",
+        navbar: true
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["NavItem"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_2__["NavLink"], {
+        className: "nav-link",
+        to: "/register"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Button"], {
+        outline: true
+      }, "\u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044F")))))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Jumbotron"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "container"
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
         className: "row row-header"
@@ -84139,7 +96308,7 @@ var Header = /*#__PURE__*/function (_React$Component) {
       }, "\u041F\u0430\u0440\u043E\u043B\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Input"], {
         type: "password",
         id: "password",
-        name: "passsword",
+        name: "password",
         innerRef: function innerRef(input) {
           return _this2.password = input;
         }
@@ -84199,6 +96368,11 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _HomeComponent__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./HomeComponent */ "./resources/js/components/HomeComponent.js");
 /* harmony import */ var _AboutComponent__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./AboutComponent */ "./resources/js/components/AboutComponent.js");
 /* harmony import */ var _FooterComponent__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ./FooterComponent */ "./resources/js/components/FooterComponent.js");
+/* harmony import */ var _RegisterComponent__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ./RegisterComponent */ "./resources/js/components/RegisterComponent.js");
+/* harmony import */ var _redux_ActionCreators__WEBPACK_IMPORTED_MODULE_7__ = __webpack_require__(/*! ../../redux/ActionCreators */ "./resources/redux/ActionCreators.js");
+/* harmony import */ var react_redux_form__WEBPACK_IMPORTED_MODULE_8__ = __webpack_require__(/*! react-redux-form */ "./node_modules/react-redux-form/lib/index.js");
+/* harmony import */ var react_redux_form__WEBPACK_IMPORTED_MODULE_8___default = /*#__PURE__*/__webpack_require__.n(react_redux_form__WEBPACK_IMPORTED_MODULE_8__);
+/* harmony import */ var react_redux__WEBPACK_IMPORTED_MODULE_9__ = __webpack_require__(/*! react-redux */ "./node_modules/react-redux/es/index.js");
 function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
@@ -84228,6 +96402,24 @@ function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.g
 
 
 
+
+
+
+
+var mapDispatchToProps = function mapDispatchToProps(dispatch) {
+  return {
+    registerUser: function registerUser(userData) {
+      dispatch(Object(_redux_ActionCreators__WEBPACK_IMPORTED_MODULE_7__["registerUser"])(userData));
+    },
+    resetRegisterForm: function resetRegisterForm() {
+      dispatch(react_redux_form__WEBPACK_IMPORTED_MODULE_8__["actions"].reset('register'));
+    },
+    processLogin: function processLogin(loginData) {
+      dispatch(Object(_redux_ActionCreators__WEBPACK_IMPORTED_MODULE_7__["processLogin"])(loginData));
+    }
+  };
+};
+
 var Main = /*#__PURE__*/function (_React$Component) {
   _inherits(Main, _React$Component);
 
@@ -84242,12 +96434,24 @@ var Main = /*#__PURE__*/function (_React$Component) {
   _createClass(Main, [{
     key: "render",
     value: function render() {
-      return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_HeaderComponent__WEBPACK_IMPORTED_MODULE_2__["default"], null), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Switch"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Route"], {
+      var _this = this;
+
+      return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_HeaderComponent__WEBPACK_IMPORTED_MODULE_2__["default"], {
+        processLogin: this.props.processLogin
+      }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Switch"], null, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Route"], {
         path: "/home",
         component: _HomeComponent__WEBPACK_IMPORTED_MODULE_3__["default"]
       }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Route"], {
         path: "/about",
         component: _AboutComponent__WEBPACK_IMPORTED_MODULE_4__["default"]
+      }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Route"], {
+        path: "/register",
+        component: function component() {
+          return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_RegisterComponent__WEBPACK_IMPORTED_MODULE_6__["default"], {
+            resetRegisterForm: _this.props.resetRegisterForm,
+            registerUser: _this.props.registerUser
+          });
+        }
       }), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["Redirect"], {
         to: "/home"
       })), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_FooterComponent__WEBPACK_IMPORTED_MODULE_5__["default"], null));
@@ -84257,7 +96461,171 @@ var Main = /*#__PURE__*/function (_React$Component) {
   return Main;
 }(react__WEBPACK_IMPORTED_MODULE_0___default.a.Component);
 
-/* harmony default export */ __webpack_exports__["default"] = (Main);
+/* harmony default export */ __webpack_exports__["default"] = (Object(react_router_dom__WEBPACK_IMPORTED_MODULE_1__["withRouter"])(Object(react_redux__WEBPACK_IMPORTED_MODULE_9__["connect"])(null, mapDispatchToProps)(Main)));
+
+/***/ }),
+
+/***/ "./resources/js/components/RegisterComponent.js":
+/*!******************************************************!*\
+  !*** ./resources/js/components/RegisterComponent.js ***!
+  \******************************************************/
+/*! exports provided: default */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! react */ "./node_modules/react/index.js");
+/* harmony import */ var react__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(react__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var reactstrap__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! reactstrap */ "./node_modules/reactstrap/es/index.js");
+/* harmony import */ var react_redux_form__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! react-redux-form */ "./node_modules/react-redux-form/lib/index.js");
+/* harmony import */ var react_redux_form__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(react_redux_form__WEBPACK_IMPORTED_MODULE_2__);
+function _typeof(obj) { "@babel/helpers - typeof"; if (typeof Symbol === "function" && typeof Symbol.iterator === "symbol") { _typeof = function _typeof(obj) { return typeof obj; }; } else { _typeof = function _typeof(obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj; }; } return _typeof(obj); }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+function _defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } }
+
+function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _defineProperties(Constructor.prototype, protoProps); if (staticProps) _defineProperties(Constructor, staticProps); return Constructor; }
+
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function"); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, writable: true, configurable: true } }); if (superClass) _setPrototypeOf(subClass, superClass); }
+
+function _setPrototypeOf(o, p) { _setPrototypeOf = Object.setPrototypeOf || function _setPrototypeOf(o, p) { o.__proto__ = p; return o; }; return _setPrototypeOf(o, p); }
+
+function _createSuper(Derived) { var hasNativeReflectConstruct = _isNativeReflectConstruct(); return function _createSuperInternal() { var Super = _getPrototypeOf(Derived), result; if (hasNativeReflectConstruct) { var NewTarget = _getPrototypeOf(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return _possibleConstructorReturn(this, result); }; }
+
+function _possibleConstructorReturn(self, call) { if (call && (_typeof(call) === "object" || typeof call === "function")) { return call; } return _assertThisInitialized(self); }
+
+function _assertThisInitialized(self) { if (self === void 0) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return self; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
+function _getPrototypeOf(o) { _getPrototypeOf = Object.setPrototypeOf ? Object.getPrototypeOf : function _getPrototypeOf(o) { return o.__proto__ || Object.getPrototypeOf(o); }; return _getPrototypeOf(o); }
+
+
+
+
+
+var Register = /*#__PURE__*/function (_React$Component) {
+  _inherits(Register, _React$Component);
+
+  var _super = _createSuper(Register);
+
+  function Register(props) {
+    var _this;
+
+    _classCallCheck(this, Register);
+
+    _this = _super.call(this, props);
+    _this.handleRegister = _this.handleRegister.bind(_assertThisInitialized(_this));
+    return _this;
+  }
+
+  _createClass(Register, [{
+    key: "handleRegister",
+    value: function handleRegister(values) {
+      console.log('Current State is: ' + JSON.stringify(values));
+      this.props.registerUser(values);
+      this.props.resetRegisterForm();
+    }
+  }, {
+    key: "render",
+    value: function render() {
+      var _this2 = this;
+
+      return /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "container"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "row "
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("h1", null, "\u0420\u0435\u0433\u0438\u0441\u0442\u0440\u0430\u0446\u0438\u044F")), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement("div", {
+        className: "row justify-content-center"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Form"], {
+        model: "register",
+        onSubmit: function onSubmit(values) {
+          return _this2.handleRegister(values);
+        }
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
+        className: "form-group"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
+        htmlFor: "firstname",
+        md: 4
+      }, "\u0418\u043C\u044F"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
+        md: 8
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
+        model: ".firstname",
+        id: "firstname",
+        name: "firstname",
+        placeholder: "\u0418\u043C\u044F",
+        className: "form-control"
+      }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
+        className: "form-group"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
+        htmlFor: "lastname",
+        md: 4
+      }, "\u0424\u0430\u043C\u0438\u043B\u0438\u044F"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
+        md: 8
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
+        model: ".lastname",
+        id: "lastname",
+        name: "lastname",
+        placeholder: "\u0424\u0430\u043C\u0438\u043B\u0438\u044F",
+        className: "form-control"
+      }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
+        className: "form-group"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
+        htmlFor: "email",
+        md: 4
+      }, "Email"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
+        md: 8
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
+        model: ".email",
+        id: "email",
+        name: "email",
+        placeholder: "Email",
+        className: "form-control"
+      }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
+        className: "form-group"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
+        htmlFor: "login",
+        md: 4
+      }, "\u041B\u043E\u0433\u0438\u043D"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
+        md: 8
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
+        model: ".login",
+        id: "login",
+        name: "login",
+        placeholder: "\u041B\u043E\u0433\u0438\u043D",
+        className: "form-control"
+      }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
+        className: "form-group"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
+        htmlFor: "password",
+        md: 4
+      }, "\u041F\u0430\u0440\u043E\u043B\u044C"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
+        md: 8
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
+        type: "password",
+        model: ".password",
+        id: "password",
+        name: "password",
+        className: "form-control"
+      }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
+        className: "form-group"
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
+        md: {
+          size: 8,
+          offset: 4
+        }
+      }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Button"], {
+        type: "submit",
+        color: "primary"
+      }, "\u0417\u0430\u0440\u0435\u0433\u0438\u0441\u0442\u0440\u0438\u0440\u043E\u0432\u0430\u0442\u044C\u0441\u044F"))))));
+    }
+  }]);
+
+  return Register;
+}(react__WEBPACK_IMPORTED_MODULE_0___default.a.Component);
+
+/* harmony default export */ __webpack_exports__["default"] = (Register);
 
 /***/ }),
 
@@ -84290,7 +96658,141 @@ __webpack_require__.r(__webpack_exports__);
 
 if (document.getElementById('root')) {
   react_dom__WEBPACK_IMPORTED_MODULE_1___default.a.render( /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(_components_App__WEBPACK_IMPORTED_MODULE_2__["default"], null), document.getElementById('root'));
-}
+} // ReactDOM.render(
+//     <React.StrictMode>
+//         <App />
+//     </React.StrictMode>,
+//     document.getElementById('root')
+// );
+
+/***/ }),
+
+/***/ "./resources/redux/ActionCreators.js":
+/*!*******************************************!*\
+  !*** ./resources/redux/ActionCreators.js ***!
+  \*******************************************/
+/*! exports provided: registerUser, processLogin */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "registerUser", function() { return registerUser; });
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "processLogin", function() { return processLogin; });
+var registerUser = function registerUser(userData) {
+  return function (dispatch) {
+    return fetch('http://localhost:8000/' + 'users', {
+      method: "POST",
+      body: JSON.stringify(userData),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "same-origin"
+    }).then(function (response) {
+      if (response.ok) {
+        return response;
+      } else {
+        var error = new Error('Error ' + response.status + ": " + response.statusText);
+        error.response = response;
+        throw error;
+      }
+    }, function (error) {
+      throw new Error(error.messages);
+    }).then(function (response) {
+      return response.json();
+    }).then(function (response) {
+      return alert('Вы были успешно зарегистрированы!\n: ' + JSON.stringify(response));
+    })["catch"](function (error) {
+      console.log('register user', error.message);
+      alert('Ошибка регистрации\nError: ' + error.message);
+    });
+  };
+};
+var processLogin = function processLogin(username, password) {
+  return function (dispatch) {
+    return fetch('http://localhost:8000/' + 'login', {
+      method: "POST",
+      body: JSON.stringify(username, password),
+      headers: {
+        "Content-Type": "application/json"
+      },
+      credentials: "same-origin"
+    }).then(function (response) {
+      if (response.ok) {
+        return response;
+      } else {
+        var error = new Error('Error ' + response.status + ": " + response.statusText);
+        error.response = response;
+        throw error;
+      }
+    }, function (error) {
+      throw new Error(error.messages);
+    }).then(function (response) {
+      return response.json();
+    }).then(function (response) {
+      return alert('Вы успешно вошли в свой аккаунт!\n: ' + JSON.stringify(response));
+    })["catch"](function (error) {
+      console.log('login', error.message);
+      alert('Ошибка входа\nError: ' + error.message);
+    });
+  };
+};
+
+/***/ }),
+
+/***/ "./resources/redux/configureStore.js":
+/*!*******************************************!*\
+  !*** ./resources/redux/configureStore.js ***!
+  \*******************************************/
+/*! exports provided: ConfigureStore */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "ConfigureStore", function() { return ConfigureStore; });
+/* harmony import */ var redux__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! redux */ "./node_modules/redux/es/redux.js");
+/* harmony import */ var redux_thunk__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! redux-thunk */ "./node_modules/redux-thunk/es/index.js");
+/* harmony import */ var redux_logger__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! redux-logger */ "./node_modules/redux-logger/dist/redux-logger.js");
+/* harmony import */ var redux_logger__WEBPACK_IMPORTED_MODULE_2___default = /*#__PURE__*/__webpack_require__.n(redux_logger__WEBPACK_IMPORTED_MODULE_2__);
+/* harmony import */ var react_redux_form__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! react-redux-form */ "./node_modules/react-redux-form/lib/index.js");
+/* harmony import */ var react_redux_form__WEBPACK_IMPORTED_MODULE_3___default = /*#__PURE__*/__webpack_require__.n(react_redux_form__WEBPACK_IMPORTED_MODULE_3__);
+/* harmony import */ var _forms__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ./forms */ "./resources/redux/forms.js");
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+
+
+
+
+
+var ConfigureStore = function ConfigureStore() {
+  var store = Object(redux__WEBPACK_IMPORTED_MODULE_0__["createStore"])(Object(redux__WEBPACK_IMPORTED_MODULE_0__["combineReducers"])(_objectSpread({}, Object(react_redux_form__WEBPACK_IMPORTED_MODULE_3__["createForms"])({
+    register: _forms__WEBPACK_IMPORTED_MODULE_4__["UserData"]
+  }))), Object(redux__WEBPACK_IMPORTED_MODULE_0__["applyMiddleware"])(redux_thunk__WEBPACK_IMPORTED_MODULE_1__["default"], redux_logger__WEBPACK_IMPORTED_MODULE_2___default.a));
+  return store;
+};
+
+/***/ }),
+
+/***/ "./resources/redux/forms.js":
+/*!**********************************!*\
+  !*** ./resources/redux/forms.js ***!
+  \**********************************/
+/*! exports provided: UserData */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+__webpack_require__.r(__webpack_exports__);
+/* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "UserData", function() { return UserData; });
+var UserData = {
+  firstname: '',
+  lastname: '',
+  email: '',
+  login: '',
+  password: ''
+};
 
 /***/ }),
 

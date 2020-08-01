@@ -32,7 +32,8 @@ class Header extends React.Component{
 
     handleLogin(event){
         this.toggleLoginModal();
-        alert('Username: ' + this.username.value + ' Password: ' + this.password.value);
+        console.log('Username: ' + this.username.value + ' Password: ' + this.password.value);
+        this.props.processLogin(this.username.value, this.password.value);
         event.preventDefault();
     }
 
@@ -52,7 +53,7 @@ class Header extends React.Component{
                                     <DropdownToggle nav caret className='nav-link' to='/problems'>
                                         Задачи
                                     </DropdownToggle>
-                                    <DropdownMenu left>
+                                    <DropdownMenu left='true'>
                                         <DropdownItem>
                                             Геометрия
                                         </DropdownItem>
@@ -77,9 +78,18 @@ class Header extends React.Component{
                         </Collapse>
                         <Nav className='ml-auto' navbar>
                             <NavItem>
-                                <Button outline onClick={this.toggleLoginModal}>
-                                    Войти
-                                </Button>
+                                    <Button outline onClick={this.toggleLoginModal}>
+                                        Войти
+                                    </Button>
+                            </NavItem>
+                        </Nav>
+                        <Nav className='ml-auto' navbar>
+                            <NavItem>
+                                <NavLink className='nav-link' to='/register'>
+                                    <Button outline>
+                                        Регистрация
+                                    </Button>
+                                </NavLink>
                             </NavItem>
                         </Nav>
                     </div>
@@ -105,7 +115,7 @@ class Header extends React.Component{
                             </FormGroup>
                             <FormGroup>
                                 <Label htmlFor='password'>Пароль</Label>
-                                <Input type='password' id='password' name='passsword'
+                                <Input type='password' id='password' name='password'
                                        innerRef={(input) => this.password = input}/>
                             </FormGroup>
                             <FormGroup>
