@@ -96222,8 +96222,10 @@ var Header = /*#__PURE__*/function (_React$Component) {
     key: "handleLogin",
     value: function handleLogin(event) {
       this.toggleLoginModal();
-      console.log('Username: ' + this.username.value + ' Password: ' + this.password.value);
-      this.props.processLogin(this.username.value, this.password.value);
+      this.props.processLogin({
+        "username": this.username.value,
+        "password": this.password.value
+      });
       event.preventDefault();
     }
   }, {
@@ -96523,7 +96525,6 @@ var Register = /*#__PURE__*/function (_React$Component) {
   _createClass(Register, [{
     key: "handleRegister",
     value: function handleRegister(values) {
-      console.log('Current State is: ' + JSON.stringify(values));
       this.props.registerUser(values);
       this.props.resetRegisterForm();
     }
@@ -96546,27 +96547,27 @@ var Register = /*#__PURE__*/function (_React$Component) {
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
         className: "form-group"
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
-        htmlFor: "firstname",
+        htmlFor: "fname",
         md: 4
       }, "\u0418\u043C\u044F"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
         md: 8
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
-        model: ".firstname",
-        id: "firstname",
-        name: "firstname",
+        model: ".fname",
+        id: "fname",
+        name: "fname",
         placeholder: "\u0418\u043C\u044F",
         className: "form-control"
       }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
         className: "form-group"
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
-        htmlFor: "lastname",
+        htmlFor: "sname",
         md: 4
       }, "\u0424\u0430\u043C\u0438\u043B\u0438\u044F"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
         md: 8
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
-        model: ".lastname",
-        id: "lastname",
-        name: "lastname",
+        model: ".sname",
+        id: "sname",
+        name: "sname",
         placeholder: "\u0424\u0430\u043C\u0438\u043B\u0438\u044F",
         className: "form-control"
       }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
@@ -96585,14 +96586,14 @@ var Register = /*#__PURE__*/function (_React$Component) {
       }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
         className: "form-group"
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Label"], {
-        htmlFor: "login",
+        htmlFor: "username",
         md: 4
       }, "\u041B\u043E\u0433\u0438\u043D"), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Col"], {
         md: 8
       }, /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(react_redux_form__WEBPACK_IMPORTED_MODULE_2__["Control"].text, {
-        model: ".login",
-        id: "login",
-        name: "login",
+        model: ".username",
+        id: "username",
+        name: "username",
         placeholder: "\u041B\u043E\u0433\u0438\u043D",
         className: "form-control"
       }))), /*#__PURE__*/react__WEBPACK_IMPORTED_MODULE_0___default.a.createElement(reactstrap__WEBPACK_IMPORTED_MODULE_1__["Row"], {
@@ -96680,11 +96681,12 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "processLogin", function() { return processLogin; });
 var registerUser = function registerUser(userData) {
   return function (dispatch) {
-    return fetch('http://localhost:8000/' + 'users', {
-      method: "POST",
+    return fetch('api/registering', {
+      method: "post",
       body: JSON.stringify(userData),
       headers: {
-        "Content-Type": "application/json"
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: "same-origin"
     }).then(function (response) {
@@ -96707,26 +96709,29 @@ var registerUser = function registerUser(userData) {
     });
   };
 };
-var processLogin = function processLogin(username, password) {
+var processLogin = function processLogin(userData) {
   return function (dispatch) {
-    return fetch('http://localhost:8000/' + 'login', {
-      method: "POST",
-      body: JSON.stringify(username, password),
+    return fetch('api/logining', {
+      method: "post",
+      body: JSON.stringify(userData),
       headers: {
-        "Content-Type": "application/json"
+        'Accept': 'application/json',
+        'Content-Type': 'application/json'
       },
       credentials: "same-origin"
-    }).then(function (response) {
-      if (response.ok) {
-        return response;
-      } else {
-        var error = new Error('Error ' + response.status + ": " + response.statusText);
-        error.response = response;
-        throw error;
-      }
-    }, function (error) {
-      throw new Error(error.messages);
-    }).then(function (response) {
+    }) // .then(response => {
+    //         if(response.ok){
+    //             return response;
+    //         } else{
+    //             let error = new Error('Error ' + response.status + ": " + response.statusText);
+    //             error.response = response;
+    //             throw error;
+    //         }
+    //     },
+    //     error => {
+    //         throw new Error(error.messages);
+    //     })
+    .then(function (response) {
       return response.json();
     }).then(function (response) {
       return alert('Вы успешно вошли в свой аккаунт!\n: ' + JSON.stringify(response));
@@ -96787,8 +96792,8 @@ var ConfigureStore = function ConfigureStore() {
 __webpack_require__.r(__webpack_exports__);
 /* harmony export (binding) */ __webpack_require__.d(__webpack_exports__, "UserData", function() { return UserData; });
 var UserData = {
-  firstname: '',
-  lastname: '',
+  fname: '',
+  sname: '',
   email: '',
   login: '',
   password: ''
@@ -96814,8 +96819,8 @@ var UserData = {
 /*! no static exports found */
 /***/ (function(module, exports, __webpack_require__) {
 
-__webpack_require__(/*! /home/nuray/Documents/matematrix/matematrix/resources/js/app.js */"./resources/js/app.js");
-module.exports = __webpack_require__(/*! /home/nuray/Documents/matematrix/matematrix/resources/sass/app.scss */"./resources/sass/app.scss");
+__webpack_require__(/*! /opt/lampp/htdocs/matematrix/resources/js/app.js */"./resources/js/app.js");
+module.exports = __webpack_require__(/*! /opt/lampp/htdocs/matematrix/resources/sass/app.scss */"./resources/sass/app.scss");
 
 
 /***/ })

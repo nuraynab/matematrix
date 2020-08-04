@@ -10,7 +10,6 @@ class Register extends React.Component{
     }
 
     handleRegister(values){
-        console.log('Current State is: ' + JSON.stringify(values));
         this.props.registerUser(values);
         this.props.resetRegisterForm();
     }
@@ -24,15 +23,15 @@ class Register extends React.Component{
                 <div className='row justify-content-center'>
                     <Form model='register' onSubmit={(values) => this.handleRegister(values)}>
                         <Row className='form-group'>
-                            <Label htmlFor='firstname' md={4}>Имя</Label>
+                            <Label htmlFor='fname' md={4}>Имя</Label>
                             <Col md={8}>
-                                <Control.text model='.firstname' id='firstname' name='firstname' placeholder='Имя' className='form-control'/>
+                                <Control.text model='.fname' id='fname' name='fname' placeholder='Имя' className='form-control'/>
                             </Col>
                         </Row>
                         <Row className='form-group'>
-                            <Label htmlFor='lastname' md={4}>Фамилия</Label>
+                            <Label htmlFor='sname' md={4}>Фамилия</Label>
                             <Col md={8}>
-                                <Control.text model='.lastname' id='lastname' name='lastname' placeholder='Фамилия' className='form-control'/>
+                                <Control.text model='.sname' id='sname' name='sname' placeholder='Фамилия' className='form-control'/>
                             </Col>
                         </Row>
                         <Row className='form-group'>
@@ -42,9 +41,9 @@ class Register extends React.Component{
                             </Col>
                         </Row>
                         <Row className='form-group'>
-                            <Label htmlFor='login' md={4}>Логин</Label>
+                            <Label htmlFor='username' md={4}>Логин</Label>
                             <Col md={8}>
-                                <Control.text model='.login' id='login' name='login' placeholder='Логин' className='form-control'/>
+                                <Control.text model='.username' id='username' name='username' placeholder='Логин' className='form-control'/>
                             </Col>
                         </Row>
                         <Row className='form-group'>

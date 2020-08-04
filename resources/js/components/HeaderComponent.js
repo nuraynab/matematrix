@@ -32,8 +32,7 @@ class Header extends React.Component{
 
     handleLogin(event){
         this.toggleLoginModal();
-        console.log('Username: ' + this.username.value + ' Password: ' + this.password.value);
-        this.props.processLogin(this.username.value, this.password.value);
+        this.props.processLogin({"username" : this.username.value, "password" : this.password.value});
         event.preventDefault();
     }
 
