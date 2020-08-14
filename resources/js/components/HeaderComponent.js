@@ -1,7 +1,6 @@
 import React from "react";
 import {Nav, Navbar, NavbarBrand, NavbarToggler, Collapse, NavItem, Jumbotron,
-    UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem,
-    Modal, ModalHeader, ModalBody, Form, FormGroup, Input, Label, Button} from "reactstrap";
+    UncontrolledDropdown, DropdownToggle, DropdownMenu, DropdownItem, Button} from "reactstrap";
 import {NavLink} from "react-router-dom";
 
 class Header extends React.Component{
@@ -14,8 +13,6 @@ class Header extends React.Component{
             isModalOpen: false
         }
         this.toggleNav = this.toggleNav.bind(this);
-        this.toggleLoginModal = this.toggleLoginModal.bind(this);
-        this.handleLogin = this.handleLogin.bind(this);
     }
 
     toggleNav(){
@@ -24,19 +21,52 @@ class Header extends React.Component{
         });
     }
 
-    toggleLoginModal(){
-        this.setState({
-            isModalOpen: !this.state.isModalOpen
-        });
-    }
-
-    handleLogin(event){
-        this.toggleLoginModal();
-        this.props.processLogin({"username" : this.username.value, "password" : this.password.value});
-        event.preventDefault();
-    }
-
     render() {
+        const {isAuthenticated} = this.props.auth;
+
+        const userLinks = (
+            <Nav>
+                <Nav className='ml-auto' navbar>
+                    <NavItem>
+                        <NavLink className='nav-link' to='/profile'>
+                            <p>
+                                {this.props.auth.user.username}
+                            </p>
+                        </NavLink>
+                    </NavItem>
+                </Nav>
+                <Nav>
+                    <NavItem>
+                        <NavLink className='nav-link' to='/home'>
+                            <Button outline onClick={this.props.processLogout}>
+                                Выход
+                            </Button>
+                        </NavLink>
+                    </NavItem>
+                </Nav>
+            </Nav>
+
+        )
+
+        const guestLinks = (
+            <Nav className='ml-auto' navbar>
+                <NavItem>
+                    <NavLink className='nav-link' to='/login'>
+                        <Button outline>
+                            Логин
+                        </Button>
+                    </NavLink>
+                </NavItem>
+                <NavItem>
+                    <NavLink className='nav-link' to='/register'>
+                        <Button outline>
+                            Регистрация
+                        </Button>
+                    </NavLink>
+                </NavItem>
+            </Nav>
+        )
+
         return(
             <div>
                 <Navbar dark expand='md'>
@@ -68,29 +98,14 @@ class Header extends React.Component{
                                     <NavLink className='nav-link' to='/courses'>Курсы</NavLink>
                                 </NavItem>
                                 <NavItem>
-                                    <NavLink className='nav-link' to='/study'>Занятия</NavLink>
+                                    <NavLink className='nav-link' to='/tutors'>Репетиторы</NavLink>
                                 </NavItem>
                                 <NavItem>
                                     <NavLink className='nav-link' to='/about'>О нас</NavLink>
                                 </NavItem>
                             </Nav>
                         </Collapse>
-                        <Nav className='ml-auto' navbar>
-                            <NavItem>
-                                    <Button outline onClick={this.toggleLoginModal}>
-                                        Войти
-                                    </Button>
-                            </NavItem>
-                        </Nav>
-                        <Nav className='ml-auto' navbar>
-                            <NavItem>
-                                <NavLink className='nav-link' to='/register'>
-                                    <Button outline>
-                                        Регистрация
-                                    </Button>
-                                </NavLink>
-                            </NavItem>
-                        </Nav>
+                        {isAuthenticated ? userLinks : guestLinks}
                     </div>
                 </Navbar>
                 <Jumbotron>
@@ -103,28 +118,7 @@ class Header extends React.Component{
                         </div>
                     </div>
                 </Jumbotron>
-                <Modal isOpen={this.state.isModalOpen} toggle={this.toggleLoginModal}>
-                    <ModalHeader toggle={this.toggleLoginModal}>Войти</ModalHeader>
-                    <ModalBody>
-                        <Form onSubmit={this.handleLogin}>
-                            <FormGroup>
-                                <Label htmlFor='username'>Логин</Label>
-                                <Input type='text' id='username' name='username'
-                                       innerRef={(input) => this.username = input}/>
-                            </FormGroup>
-                            <FormGroup>
-                                <Label htmlFor='password'>Пароль</Label>
-                                <Input type='password' id='password' name='password'
-                                       innerRef={(input) => this.password = input}/>
-                            </FormGroup>
-                            <FormGroup>
-                                <Button type='submit' value='submit' color='primary'>Войти</Button>
-                            </FormGroup>
-                        </Form>
-                    </ModalBody>
-                </Modal>
             </div>
-
         )
     }
 }

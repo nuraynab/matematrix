@@ -20,7 +20,7 @@ class Register extends React.Component{
                 <div className='row '>
                     <h1>Регистрация</h1>
                 </div>
-                <div className='row justify-content-center'>
+                <div className='row row-content justify-content-center'>
                     <Form model='register' onSubmit={(values) => this.handleRegister(values)}>
                         <Row className='form-group'>
                             <Label htmlFor='fname' md={4}>Имя</Label>
@@ -41,6 +41,24 @@ class Register extends React.Component{
                             </Col>
                         </Row>
                         <Row className='form-group'>
+                            <Label htmlFor='education' md={4}>Место обучения</Label>
+                            <Col md={8}>
+                                <Control.text model='.education' id='education' name='education' className='form-control'/>
+                            </Col>
+                        </Row>
+                        <Row className='form-group'>
+                            <Label htmlFor='age' md={4}>Возраст</Label>
+                            <Col md={8}>
+                                <Control.text model='.age' id='age' name='age' className='form-control'/>
+                            </Col>
+                        </Row>
+                        <Row className='form-group'>
+                            <Label htmlFor='country' md={4}>Страна</Label>
+                            <Col md={8}>
+                                <Control.text model='.country' id='country' name='country' className='form-control'/>
+                            </Col>
+                        </Row>
+                        <Row className='form-group'>
                             <Label htmlFor='username' md={4}>Логин</Label>
                             <Col md={8}>
                                 <Control.text model='.username' id='username' name='username' placeholder='Логин' className='form-control'/>
@@ -50,6 +68,12 @@ class Register extends React.Component{
                             <Label htmlFor='password' md={4}>Пароль</Label>
                             <Col md={8}>
                                 <Control.text type='password' model='.password' id='password' name='password' className='form-control'/>
+                            </Col>
+                        </Row>
+                        <Row className='form-group'>
+                            <Label htmlFor='description' md={12}>Опишите ваши личные достижения</Label>
+                            <Col md={12}>
+                                <Control.textarea model='.description' id='description' name='description' rows='5' className='form-control'/>
                             </Col>
                         </Row>
                         <Row className='form-group'>
