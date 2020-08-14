@@ -34,8 +34,6 @@ class Header extends React.Component{
                             </p>
                         </NavLink>
                     </NavItem>
-                </Nav>
-                <Nav>
                     <NavItem>
                         <NavLink className='nav-link' to='/home'>
                             <Button outline onClick={this.props.processLogout}>
