@@ -24,7 +24,7 @@ export const fetchTutors = () => (dispatch) => {
 
     dispatch(tutorsLoading());
 
-    return fetch('api/tutors') // !!!!!!!! в api/tutors нужен список всех тьюторов !!!!!!!!
+    return fetch('api/tutorGetData') // !!!!!!!! в api/tutors нужен список всех тьюторов !!!!!!!!
         .then(response => {
                 if (response.ok) {
                     return response;
@@ -44,7 +44,7 @@ export const fetchTutors = () => (dispatch) => {
 
 export const postTutor = (tutorData) => (dispatch) => {
 
-    return axios.post('api/tutors', tutorData)
+    return axios.post('api/tutorRegister', tutorData)
         .then(response => dispatch(addTutor(response)))
         .then(() => alert('Ваша заявка отправлена \n'))
         .catch(error => {console.log('post tutor', error.message); alert('Не удалось загрузить объявление. \nError: ' + error.message);});

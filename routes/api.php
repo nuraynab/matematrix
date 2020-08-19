@@ -17,6 +17,12 @@ use Illuminate\Support\Facades\Route;
 Route::middleware('auth:api')->get('/user', function (Request $request) {
     return $request->user();
 });
-Route::post('registering', 'UserController@register')->name('register');
+Route::post('registering', 'UserController@register')->name('user.register');
 
-Route::post('logining', 'UserController@login')->name('login');
+Route::post('logining', 'UserController@login')->name('user.login');
+
+Route::post('logout', 'UserController@Logout');
+
+Route::post('tutorRegister', 'TutorController@register')->name('tutor.register');
+
+Route::get('tutorGetData', 'TutorController@getAllData')->name('tutor.getData');

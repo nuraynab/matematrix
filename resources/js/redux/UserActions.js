@@ -31,6 +31,7 @@ export const processLogout = () => (dispatch) => {
     localStorage.removeItem('LoginToken');
     setAuthorizationToken(false);
     dispatch(setCurrentUser({}));
+    return axios.post('api/logout');
 }
 
 export const setCurrentUser = (user) => ({

@@ -11,7 +11,6 @@ import {UserData, LoginData, TutorForm} from "./forms";
 export const ConfigureStore = () => {
     const enhancers = compose(
         applyMiddleware(thunk, logger),
-        window.__REDUX_DEVTOOLS_EXTENSION__ && window.__REDUX_DEVTOOLS_EXTENSION__()
     );
 
     const store = createStore(

@@ -18,11 +18,8 @@ class UserController extends Controller
 
       try{
         $user = User::create($req->toArray());
-        Auth::login($user);
 
-        $cookie = Cookie::make('auth', $req['username'], 120);
-
-        return response()->json(["message" => "User registered successfully"], 201)->cookie($cookie);
+        return response()->json(["message" => "User registered successfully"], 201);
       }catch (Illuminate\Database\QueryException $e){
           $errorCode = $e->errorInfo[1];
           if($errorCode == 1062){
@@ -39,16 +36,15 @@ class UserController extends Controller
       }
 
       if(Auth::attempt(['username'=>$request['username'], 'password'=>$request['password']])){
-        $cookie = Cookie::make('auth', $request['username'], 120);
+        $cookie = Cookie::make('auth', bcrypt($request['username']), 120);
         return response()->json(["message" => "Logged in!"], 201)->cookie($cookie);
       }
       return response()->json(["message" => "Wrong username or password!"], 401);
     }
 
-    public function logout(){
-      $cookie = Cookie::forget('auth');
+    public function Logout(){
       Auth::logout();
-      return redirect()->route('main')->withCookie($cookie);
+      return redirect()->route('home')->withCookie(Cookie::forget('auth'));
     }
 
 }
