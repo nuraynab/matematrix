@@ -13,7 +13,7 @@ class UserController extends Controller
 
       if(Cookie::get('auth')!==null){
         // case when the user is already logged in
-        return response()->json(["message" => "User is already logged in"], 201);
+        return response()->json(["message" => "Someone is already logged in"], 201);
       }
 
       try{
@@ -32,8 +32,10 @@ class UserController extends Controller
 
       if(Cookie::get('auth')!==null){
         // case when the user is already logged in
-        return response()->json(["message" => "User is already logged in"], 400);
+        return response()->json(["message" => "Someone is already logged in"], 400);
       }
+
+
 
       if(Auth::attempt(['username'=>$request['username'], 'password'=>$request['password']])){
         $cookie = Cookie::make('auth', bcrypt($request['username']), 120);
@@ -44,7 +46,7 @@ class UserController extends Controller
 
     public function Logout(){
       Auth::logout();
-      return redirect()->route('home')->withCookie(Cookie::forget('auth'));
+      return redirect()->back()->withCookie(Cookie::forget('auth'));
     }
 
 }

@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Aug 04, 2020 at 03:56 PM
+-- Generation Time: Aug 30, 2020 at 08:00 AM
 -- Server version: 10.4.11-MariaDB
 -- PHP Version: 7.4.5
 
@@ -54,7 +54,33 @@ CREATE TABLE `migrations` (
 
 INSERT INTO `migrations` (`id`, `migration`, `batch`) VALUES
 (1, '2014_10_12_000000_create_users_table', 1),
-(2, '2019_08_19_000000_create_failed_jobs_table', 1);
+(2, '2019_08_19_000000_create_failed_jobs_table', 1),
+(3, '2020_08_16_121614_create_teachers_table', 1),
+(4, '2020_08_19_095308_create_tutors_table', 2);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `tutors`
+--
+
+CREATE TABLE `tutors` (
+  `id` bigint(20) UNSIGNED NOT NULL,
+  `fname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `sname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `telnum` char(20) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
+  `created_at` timestamp NULL DEFAULT NULL,
+  `updated_at` timestamp NULL DEFAULT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `tutors`
+--
+
+INSERT INTO `tutors` (`id`, `fname`, `sname`, `email`, `telnum`, `description`, `created_at`, `updated_at`) VALUES
+(1, 'Dilnaz', 'Amanzholova', 'Dilnaz010220@gmail.com', '87012345678', 'No experience!', '2020-08-19 04:10:10', '2020-08-19 04:10:10');
 
 -- --------------------------------------------------------
 
@@ -67,6 +93,10 @@ CREATE TABLE `users` (
   `fname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `sname` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `email` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `education` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `age` int(11) NOT NULL,
+  `country` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `description` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `username` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
   `email_verified_at` timestamp NULL DEFAULT NULL,
   `password` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -79,8 +109,8 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `fname`, `sname`, `email`, `username`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
-(2, 'Dilnaz', 'Amanzholova', 'Dilnaz010220@gmail.com', 'dilnazanlid', NULL, '$2y$10$086c2ceHD3/TFaibcDHR7OtD/.DaadrP7ZVZW4z2atkNnGagWLzla', NULL, '2020-08-04 03:52:11', '2020-08-04 03:52:11');
+INSERT INTO `users` (`id`, `fname`, `sname`, `email`, `education`, `age`, `country`, `description`, `username`, `email_verified_at`, `password`, `remember_token`, `created_at`, `updated_at`) VALUES
+(1, 'Dilnaz', 'Amanzholova', 'Dilnaz010220@gmail.com', 'Nazarbayev University', 100, 'Kazakhstan', 'Did nothing at uni, sorry)', 'dilnazanlid', NULL, '$2y$10$0AEFwGJOhsZ9cyfWSBeEh.pNrKLmaMEzWTNLKSpbLeWTt6UIxR/hS', NULL, '2020-08-16 06:30:16', '2020-08-16 06:30:16');
 
 --
 -- Indexes for dumped tables
@@ -97,6 +127,14 @@ ALTER TABLE `failed_jobs`
 --
 ALTER TABLE `migrations`
   ADD PRIMARY KEY (`id`);
+
+--
+-- Indexes for table `tutors`
+--
+ALTER TABLE `tutors`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `tutors_email_unique` (`email`),
+  ADD UNIQUE KEY `tutors_telnum_unique` (`telnum`);
 
 --
 -- Indexes for table `users`
@@ -120,13 +158,19 @@ ALTER TABLE `failed_jobs`
 -- AUTO_INCREMENT for table `migrations`
 --
 ALTER TABLE `migrations`
-  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=3;
+  MODIFY `id` int(10) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
+
+--
+-- AUTO_INCREMENT for table `tutors`
+--
+ALTER TABLE `tutors`
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `id` bigint(20) UNSIGNED NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
